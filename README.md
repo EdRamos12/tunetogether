@@ -1,34 +1,69 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+# 🎵 Online Party!
 
-First, run the development server:
+The app was made to connect you and your friends, into listening podcasts, videos and music together! This tool was made for studying purposes, to embed different applications and how to synchronize them with multiple people. It does not collect **any**  costs nor does it have transactional fees included.
+
+**🚧 Project currently being made. 🚧**
+
+## ☑️ Features
+
+Check the list for more details about the project.
+
+- [x] Sign in/Log in system (back-end)
+- [ ] Make website layout
+- [ ] Request song/video feature
+- [ ] Make an actual functional online playlist
+- [ ] Sync time with everyone that enters the room
+- [ ] Make a functional chat
+- [ ] Skip song/video (owner permissions/vote system)
+- [ ] Add ratio system (like/dislikes)
+- [ ] Make rooms (private/public) with sharable code
+- [ ] Make public list of servers
+- [ ] E-mail verification
+- [ ] Working audio vizualiser on background!!
+- [ ] Role system(???) + Reaction system(???)
+- [ ] Advanced: background animated + reacts to the music beat
+
+## 🚀 Running the project
+
+### ❔ Requirements
+
+In case you want to run this project, you will need:
+- [Git](https://git-scm.com/) 
+- [Yarn](https://classic.yarnpkg.com/lang/en/)
+- [NodeJS](https://nodejs.org/en/) 
+
+### 📋 Cloning this repo
 
 ```bash
-npm run dev
-# or
-yarn dev
+# Clone this repository
+$ git clone -b master https://github.com/EdRamos12/online-party-app
+
+# Go into the repository
+$ cd online-party-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 💻 Setting up front-end
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+<blockquote> 
+	<h3>💡 Note</h3>
+	Do take note that, you will need to set up the .env file at the root of this project! <i>+ an online/local <b>mongodb!</b></i><br> An example file is already available! (⁄ ⁄◕⁄‿⁄◕⁄ ⁄✿)
+</blockquote>
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```bash
+# Install dependencies (You can either use yarn or npm as package manager)
+$ yarn # or 'npm i'
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+# Running the application
+$ yarn dev # or 'npm run dev'
+```
+Website address: [http://localhost:3000/](http://localhost:3000/).
 
-## Learn More
+## 📜 License
 
-To learn more about Next.js, take a look at the following resources:
+This project is under the MIT license. See the [LICENSE](https://github.com/EdRamos12/proffy/blob/master/LICENSE) for more information.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## 🤝 Contribution
+Consider supporting this project by starring it! It will mean a lot to me =] 
+You can also submit your own submissions or ideas for the app, and if you can consider, actually improving the code! *(Reminder that this project is made for studying purposes only!)*
+All kinds of contributions are very welcome and appreciated! (◕‿◕*⭐️*)

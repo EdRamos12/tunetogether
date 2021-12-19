@@ -1,4 +1,3 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 import { InsertOneResult, MongoClient, ObjectId } from "mongodb";
 import assert, { AssertionError } from "assert";
@@ -25,10 +24,6 @@ interface userInterfaceDB {
   email: string;
   password: string;
 }
-
-// type Data = {
-//   name: string
-// }
 
 const client = new MongoClient(
   process.env.URI as string,
