@@ -4,52 +4,18 @@ import assert, { AssertionError } from "assert";
 import { hash } from "bcrypt";
 import { v4 } from "uuid";
 import { sign } from "jsonwebtoken";
+import findUser, { userInterfaceDB } from "../utils/findUser";
+import client from "./client";
 
 interface createUserCallbackInterface {(
     creationResult: InsertOneResult<Document> | undefined,
     email: string,
     userId: string
-  ): void | null;
-}
+): void | null;}
 
-interface findUserCallbackInterface {(
-    err: Error, 
-    user: userInterfaceDB | null
-  ): void | null
-}
 
-interface userInterfaceDB {
-  _id: ObjectId;
-  userId: string;
-  email: string;
-  password: string;
-}
 
-const client = new MongoClient(
-  process.env.URI as string,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  } as any
-);
-
-function findUser(
-  client: MongoClient,
-  dbName: string,
-  email: string,
-  callback: findUserCallbackInterface
-) {
-  const collection = client.db(dbName).collection("user");
-  collection.findOne({ email }, callback as any);
-}
-
-function createUser(
-  client: MongoClient,
-  dbName: string,
-  email: string,
-  password: string,
-  callback: createUserCallbackInterface
-) {
+function createUser(client: MongoClient, dbName: string, email: string, password: string, callback: createUserCallbackInterface) {
   const collection = client.db(dbName).collection("user");
   const userId = v4();
   hash(password, 10, function (_, hash) {
@@ -91,47 +57,32 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
-    client.connect(function (err) {
+    client.connect(function (err, result) {
       assert.equal(null, err);
-      console.log("Conectado ao server mongo =>");
+      console.log("Conectado ao server mongo => "+ result!.options.srvHost);
       const email = req.body.email;
       const password = req.body.password;
 
-      findUser(
-        client,
-        process.env.DB_NAME as string,
-        email,
-        function (err: Error, user: userInterfaceDB | null) {
+      findUser(client, process.env.DB_NAME as string, email, function (err: Error, user: userInterfaceDB | null) {
           console.log(user);
           if (err) {
-            res
-              .status(500)
-              .json({ error: true, message: "Erro ao achar usuário" });
+            res.status(500).json({ error: true, message: "Erro ao achar usuário" });
             return;
           }
           if (!user) {
             //se n tem usuario, bo criar
-            createUser(
-              client,
-              process.env.DB_NAME as string,
-              email,
-              password,
-              function (
+            createUser(client, process.env.DB_NAME as string, email, password, function (
                 creationResult: InsertOneResult<Document> | undefined,
                 email: string,
                 userId: string
               ) {
                 if (creationResult!.acknowledged === true) {
-                  const token = sign(
-                    {
+                  const token = sign({
                       userId,
                       email,
-                    },
-                    process.env.JWT_SECRET as string,
-                    {
+                  }, process.env.JWT_SECRET as string, {
                       expiresIn: 10800,
-                    }
-                  );
+                  });
                   res.status(200).json({ token });
                   return;
                 }
@@ -145,5 +96,4 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       );
     });
   }
-  // return res.status(200).json({ name: 'John Doe' })
 }
