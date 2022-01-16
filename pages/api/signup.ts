@@ -4,8 +4,8 @@ import assert, { AssertionError } from "assert";
 import { hash } from "bcrypt";
 import { v4 } from "uuid";
 import { sign } from "jsonwebtoken";
-import findUser, { userInterfaceDB } from "../utils/findUser";
-import client from "../utils/client";
+import findUser, { userInterfaceDB } from "../../utils/findUser";
+import client from "../../utils/client";
 
 interface createUserCallbackInterface {(
     creationResult: InsertOneResult<Document> | undefined,

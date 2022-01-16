@@ -1,13 +1,13 @@
 import assert, { AssertionError } from "assert";
 import { compare } from "bcrypt";
 import { NextApiRequest, NextApiResponse } from "next";
-import findUser, { userInterfaceDB } from "../utils/findUser";
-import client from "../utils/client";
+import findUser, { userInterfaceDB } from "../../utils/findUser";
+import client from "../../utils/client";
 import { sign } from "jsonwebtoken";
 
 async function authUser(password: string, hash: string, callback: any) {
   //const collection = db.collection('user');
-  const result = await compare(password, hash, callback);
+  compare(password, hash, callback);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     assert.notEqual(null, req.body.email, "Precisa colocar e-mail!");
     assert.notEqual(null, req.body.password, "Precisa colocar uma senha!");
   } catch (bodyError: AssertionError | any) {
-    return res.status(403).json({ error: true, message: bodyError.message });;
+    return res.status(403).json({ error: true, message: bodyError.message });
   }
 
   client.connect(function (err, result) {
