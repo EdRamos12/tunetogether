@@ -2,7 +2,7 @@ import assert, { AssertionError } from "assert";
 import { compare } from "bcrypt";
 import { NextApiRequest, NextApiResponse } from "next";
 import findUser, { userInterfaceDB } from "../utils/findUser";
-import client from "./client";
+import client from "../utils/client";
 import { sign } from "jsonwebtoken";
 
 async function authUser(password: string, hash: string, callback: any) {
