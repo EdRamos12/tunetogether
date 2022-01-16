@@ -12,7 +12,7 @@ interface findUserCallbackInterface {(
   user: userInterfaceDB | null
 ): void | null}
 
-export default function findUser(client: MongoClient, dbName: string, email: string, callback: findUserCallbackInterface) {
+export default async function findUser(client: MongoClient, dbName: string, email: string, callback: findUserCallbackInterface) {
   const collection = client.db(dbName).collection("user");
   collection.findOne({ email }, callback as any);
 }

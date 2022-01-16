@@ -13,8 +13,6 @@ interface createUserCallbackInterface {(
     userId: string
 ): void | null;}
 
-
-
 function createUser(client: MongoClient, dbName: string, email: string, password: string, callback: createUserCallbackInterface) {
   const collection = client.db(dbName).collection("user");
   const userId = v4();
@@ -59,12 +57,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     client.connect(function (err, result) {
       assert.equal(null, err);
-      console.log("Conectado ao server mongo => "+ result!.options.srvHost);
+      // console.log("Conectado ao server mongo => "+ result!.options.srvHost);
       const email = req.body.email;
       const password = req.body.password;
 
-      findUser(client, process.env.DB_NAME as string, email, function (err: Error, user: userInterfaceDB | null) {
-          console.log(user);
+      return findUser(client, process.env.DB_NAME as string, email, function (err: Error, user: userInterfaceDB | null) {
+          //console.log(user);
           if (err) {
             res.status(500).json({ error: true, message: "Erro ao achar usuário" });
             return;
@@ -85,6 +83,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
                   });
                   res.status(200).json({ token });
                   return;
+                } else {
+                  res.status(500).json({ error: true, message: "Erro ao criar usuario, ve os logs irmao: "+creationResult });
+                  return;
                 }
               }
             );
@@ -96,4 +97,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       );
     });
   }
+}
+
+export const config = {
+  api: {
+    externalResolver: true, //next ur dumb
+  },
 }
