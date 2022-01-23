@@ -1,6 +1,8 @@
 import { parse } from 'url'
 import next from 'next'
 import express from 'express';
+import http from 'http';
+import socket, { Server } from 'socket.io';
 
 const port = parseInt(process.env.PORT || '3000', 10);
 const dev = process.env.NODE_ENV !== 'production';
@@ -9,6 +11,22 @@ const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   const server = express();
+  const httpServer = http.createServer(server);
+  const io = new Server(httpServer, {
+    path: '/socket.io'
+  });
+
+  const clients: Array<any> = [];
+
+  io.on('connection', (client: any) => {
+    console.log(`Cliente conectado => ${client.id}`)
+    clients.push(client);
+
+    client.on('disconnect' , () => {
+      console.log(`Cliente desconectado => ${client.id}`)
+      clients.splice(clients.indexOf(client), 1);
+    })
+  })
 
   server.get('/io/test', (req: any, res: any) => {
     return res.json({ message: 'WOOOOOOO YEAAAAH BABY' });
@@ -19,7 +37,7 @@ app.prepare().then(() => {
     return handle(req, res, parsedUrl);
   });
 
-  server.listen(port, () => {
+  httpServer.listen(port, () => {
     console.log(`> Server listening at http://localhost:${port} as ${dev ? 'development' : process.env.NODE_ENV}`);
   })
 });
