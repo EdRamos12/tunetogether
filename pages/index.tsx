@@ -8,21 +8,28 @@ import styles from '../styles/Home.module.css';
 const Home: NextPage = () => {
   const [socket, setSocket] = useState(null as any);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [room, setRoom] = useState('');
+  const [url, setUrl] = useState('');
 
-  useEffect(() => {
-    const newSocket = io();
-    setSocket(newSocket);
-  }, []);
+  // useEffect(() => {
+  //   const newSocket = io();
+  //   setSocket(newSocket);
+  // }, []);
 
   useEffect(() => {
     if (!socket) return;
+    if (!room) return;
     
     socket.on('connect', () => {
       setSocketConnected(socket.connected);
     });
 
     socket.on('disconnect', () => {
-      setSocketConnected(socket.connected);
+      setSocketConnected(() => {console.log(socket.connected); return socket.connected});
+    });
+
+    socket.on('disconnected', (status: string) => {
+      console.log(status);
     });
   }, [socket]);
 
@@ -31,6 +38,29 @@ const Home: NextPage = () => {
       socket.disconnect();
     else {
       socket.connect();
+    }
+  }
+
+  const handleRoomConnection = () => {
+    if (!socketConnected) {
+      const correctedRoomCode = room.split(" ").join("");
+      console.log(correctedRoomCode.length >= 6);
+      if (correctedRoomCode.length >= 6 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
+        // socket.emit('join', room);
+        setSocket(io({
+          query: {
+            roomCode: room
+          }
+        }));
+      } else {
+        alert('ayo check yo room code');
+      }
+    }
+  }
+
+  const handleSongRequest = () => {
+    if (socketConnected) {
+      socket.emit('request-song', url);
     }
   }
 
@@ -48,7 +78,16 @@ const Home: NextPage = () => {
         type="button"
         style={{ marginTop: 10 }}
         value={socketConnected ? 'Disconnect' : 'Connect'}
+        disabled={!socket}
         onClick={handleSocketConnection} />
+
+      <input type="text" onChange={ (e) => setRoom(e.target.value) } />
+
+      <input type="button" value={`join '${room}' room`} onClick={handleRoomConnection} />
+
+      <input type="text" onChange={ (e) => setUrl(e.target.value) } />
+
+      <input type="button" value={`request song`} onClick={handleSongRequest} />
     </div>
   )
 }
