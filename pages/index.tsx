@@ -44,8 +44,8 @@ const Home: NextPage = () => {
   const handleRoomConnection = () => {
     if (!socketConnected) {
       const correctedRoomCode = room.split(" ").join("");
-      console.log(correctedRoomCode.length >= 6);
-      if (correctedRoomCode.length >= 6 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
+      console.log(correctedRoomCode.length >= 5);
+      if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
         // socket.emit('join', room);
         setSocket(io({
           query: {

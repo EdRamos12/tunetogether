@@ -45,11 +45,12 @@ const queueMusicHandler = async (link: string) => {
     duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string);
 
     let time_to_play: number;
+    let threshold = 1 * 1000; // 1 second
 
     if (musics.length === 0 ) {
       time_to_play = Date.now();
     } else {
-      time_to_play = musics[musics.length - 1].time_to_play + ((musics[musics.length - 1].duration + 1) * 1000)  // one second threshold;
+      time_to_play = musics[musics.length - 1].time_to_play + ((musics[musics.length - 1].duration + .5) * threshold);
     }
 
     musics.push({
@@ -70,7 +71,6 @@ app.prepare().then(() => {
   });
 
   const clients: Array<any> = [];
-  
 
   // room created
   io.of('/').adapter.on('create-room', (room) => { 
@@ -113,11 +113,27 @@ app.prepare().then(() => {
       console.log(`Cliente desconectado => ${socket.id}`);
       clients.splice(clients.indexOf(socket), 1);
     })
-  })
+  });
 
   server.get('/io/get-songs', (req: any, res: any) => {
     return res.json(musics as any);
-  })
+  });
+
+  server.get('/io/sync', (_: any, res: any) => {
+    if (musics.length == 0) return res.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
+
+    let durationArray = musics.map( ({ time_to_play }) => time_to_play );
+    const timeNow = Date.now();
+    const currentTime = durationArray.reduce(function(prev: number, curr: number) {
+      if (timeNow - curr > 0 && prev - curr < timeNow - curr) {
+          return curr;
+      } else {
+          return prev;
+      }
+    });
+
+    return res.status(200).json({ message: currentTime });
+  });
   
   server.all('*', (req: any, res: any) => {
     const parsedUrl = parse(req.url, true);
@@ -126,5 +142,5 @@ app.prepare().then(() => {
 
   httpServer.listen(port, () => {
     console.log(`> Server listening at http://localhost:${port} as ${dev ? 'development' : process.env.NODE_ENV}`);
-  })
+  });
 });
