@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import styles from '../styles/Home.module.css';
+import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon } from '@primer/octicons-react';
 
 const Home: NextPage = () => {
   const [socket, setSocket] = useState(null as any);
@@ -72,9 +73,56 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <h1>AYO THE PIZZA HERE</h1>
+      <div className={styles.sidebar}>
+        <button className={styles.sidebarButtonTop}>
+          <HomeIcon />
+        </button>
 
-      <input
+          <div className={styles.buttonsHandler}>
+            <div className={styles.buttonHolder}>
+              <button className={styles.sidebarButton}>
+                <PlusIcon />
+              </button>
+            <span>Add Music</span>
+          </div>
+          <div className={styles.buttonHolder}>
+            <button className={styles.sidebarButton}>
+              <SearchIcon />
+            </button>
+            <span>Search Rooms</span>
+          </div>
+          <div className={styles.buttonHolder}>
+            <button className={styles.sidebarButton}>
+              <SignInIcon />
+            </button>
+            <span>Enter room <br /> code</span>
+          </div>
+          <div className={styles.buttonHolder}>
+            <button className={styles.sidebarButton}>
+              <PlusCircleIcon />
+            </button>
+            <span>Create new room</span>
+          </div>
+        </div>
+
+        <button className={styles.sidebarButtonBottom}>
+          <PersonIcon />
+        </button>
+      </div>
+
+      <div className={styles.main}>
+        hi
+      </div>
+
+      <div className={styles.chatRoom}>
+        <div></div>
+        <div className={styles.chatMessengerHandler}>
+          <textarea name="" id="" />
+          <button></button>
+        </div>
+      </div>
+
+      {/* <input
         type="button"
         style={{ marginTop: 10 }}
         value={socketConnected ? 'Disconnect' : 'Connect'}
@@ -87,7 +135,7 @@ const Home: NextPage = () => {
 
       <input type="text" onChange={ (e) => setUrl(e.target.value) } />
 
-      <input type="button" value={`request song`} onClick={handleSongRequest} />
+      <input type="button" value={`request song`} onClick={handleSongRequest} /> */}
     </div>
   )
 }
