@@ -1,3 +1,12 @@
+:root {
+  --black: #191A19;
+  --black-green: #151c15;
+  --dark-green: #1E5128;
+  --green: #4E9F3D;
+  --bluey-green: #1c392c;
+  --light-green: #D8E9A8;
+}
+
 html,
 body {
   padding: 0;

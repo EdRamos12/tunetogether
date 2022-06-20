@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import styles from '../styles/Home.module.css';
 import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon } from '@primer/octicons-react';
+import NavbarButton from '../components/NavbarButton';
+import ChatMessage from '../components/ChatMessage';
 
 const Home: NextPage = () => {
   const [socket, setSocket] = useState(null as any);
@@ -78,31 +80,19 @@ const Home: NextPage = () => {
           <HomeIcon />
         </button>
 
-          <div className={styles.buttonsHandler}>
-            <div className={styles.buttonHolder}>
-              <button className={styles.sidebarButton}>
-                <PlusIcon />
-              </button>
-            <span>Add Music</span>
-          </div>
-          <div className={styles.buttonHolder}>
-            <button className={styles.sidebarButton}>
-              <SearchIcon />
-            </button>
-            <span>Search Rooms</span>
-          </div>
-          <div className={styles.buttonHolder}>
-            <button className={styles.sidebarButton}>
-              <SignInIcon />
-            </button>
-            <span>Enter room <br /> code</span>
-          </div>
-          <div className={styles.buttonHolder}>
-            <button className={styles.sidebarButton}>
-              <PlusCircleIcon />
-            </button>
-            <span>Create new room</span>
-          </div>
+        <div className={styles.buttonsHandler}>
+          <NavbarButton buttonName={"Add Music"}>
+            <PlusIcon />
+          </NavbarButton>
+          <NavbarButton buttonName={"Search Rooms"}>
+            <SearchIcon />
+          </NavbarButton>
+          <NavbarButton buttonName={"Enter room code"}>
+            <SignInIcon />
+          </NavbarButton>
+          <NavbarButton buttonName={"Create new room"}>
+            <PlusCircleIcon />
+          </NavbarButton>
         </div>
 
         <button className={styles.sidebarButtonBottom}>
@@ -115,10 +105,14 @@ const Home: NextPage = () => {
       </div>
 
       <div className={styles.chatRoom}>
-        <div></div>
+        <div className={styles.MessagesHandler}>
+          <ChatMessage user={"Example"}>
+            {"Yellow"}
+          </ChatMessage>
+        </div>
         <div className={styles.chatMessengerHandler}>
-          <textarea name="" id="" />
-          <button></button>
+          <textarea rows={3} name="" id="" />
+          <button>Send</button>
         </div>
       </div>
 

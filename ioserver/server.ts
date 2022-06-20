@@ -31,6 +31,10 @@ const youtubeDurationToSeconds = (duration: string) => {
   return seconds;
 }
 
+const filterMusicPlaylist = () => {
+  musics = musics.filter((item: any) => item.time_to_play >= Date.now()-(item.duration*1000));
+}
+
 const queueMusicHandler = async (link: string) => {
   let duration;
 
@@ -52,13 +56,14 @@ const queueMusicHandler = async (link: string) => {
     } else {
       time_to_play = musics[musics.length - 1].time_to_play + ((musics[musics.length - 1].duration + .5) * threshold);
     }
+    filterMusicPlaylist();
 
     musics.push({
       song_url: link,
       time_to_play,
       duration
     });
-  
+
     return options.path?.replace('/', '') || options.query.v; // temp
   }
 }
@@ -120,6 +125,8 @@ app.prepare().then(() => {
   });
 
   server.get('/io/sync', (_: any, res: any) => {
+    filterMusicPlaylist();
+
     if (musics.length == 0) return res.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
 
     let durationArray = musics.map( ({ time_to_play }) => time_to_play );
@@ -132,7 +139,7 @@ app.prepare().then(() => {
       }
     });
 
-    return res.status(200).json({ message: currentTime });
+    return res.status(200).json({ message: musics.find(item => item.time_to_play === currentTime) });
   });
   
   server.all('*', (req: any, res: any) => {

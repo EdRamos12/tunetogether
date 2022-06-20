@@ -1,0 +1,17 @@
+.MessageWrapper {
+  margin: .5rem 0;
+  word-break: break-all;
+  color: white;
+  background: black;
+}
+
+.UsernameDisplay {
+  display: block;
+  margin-bottom: .5rem;
+}
+
+.Message {
+  word-break: break-all;
+  white-space: normal;
+  padding-left: 1rem;
+}

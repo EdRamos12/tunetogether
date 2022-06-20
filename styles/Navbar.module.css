@@ -1,0 +1,57 @@
+.sidebarButton, .sidebarButtonTop, .sidebarButtonBottom {
+  padding: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  transition: .2s;
+}
+
+.sidebarButton:hover, .sidebarButtonTop:hover, .sidebarButtonBottom:hover {
+  padding: 10px;
+  background: rgb(230, 243, 230);
+  border: none;
+  border-radius: 50%;
+}
+
+.buttonsHandler {
+  max-height: 30%; 
+  justify-content: space-between;
+}
+
+.sidebarButtonTop, .sidebarButtonBottom {
+  margin: 20px 0;
+}
+
+.buttonHolder span {
+  color: white;
+  font-size: 20px;
+  transition: .2s;
+  position: absolute;
+  left: 0;
+  margin-left: -55px;
+  background: #000000c7;
+  padding: 7px;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0%;
+  z-index: -10;
+  white-space: pre-line;
+  text-align: center;
+}
+
+.buttonHolder span::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 25%;
+  width: 0; 
+  height: 0; 
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent; 
+  border-right:10px solid #000000c7; 
+}
+
+.buttonHolder .sidebarButton:hover + span {
+  margin-left: 75px;
+  opacity: 90%;
+}
