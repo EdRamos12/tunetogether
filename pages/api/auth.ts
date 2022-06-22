@@ -22,12 +22,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const email = req.body.email;
     const password = req.body.password;
     findUser(client, process.env.DB_NAME as string, email, function (err: Error, user:  userInterfaceDB | null) {
-      if (err) {
-        return res.status(500).json({ error: true, message: "Erro ao achar usuário: "+err.message });;
-      }
       if (!user) {
-        return res.status(401).json({ error: true, message: "E-mail/Senha Incorreto" });;
-      } else {
+        return res.status(401).json({ error: true, message: "E-mail/Senha Incorreto" });
+      } 
+
+      if (err) {
+        return res.status(500).json({ error: true, message: "Erro ao achar usuário: "+err.message });
+      }
+
         authUser(password, user.password, (err: Error, resp: any) => {
           if (err) return res.status(500).json({ error: true, message: "Erro no sistema: "+err.message });
           if (!resp) return res.status(401).json({ error: true, message: "E-mail/Senha Incorreto" }); // senha incorreta
@@ -40,7 +42,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
           return res.status(200).json({ token });;
         });
-      }
     });
   });
 }

@@ -8,8 +8,8 @@ interface MessageProps {
 const ChatMessage = (props: MessageProps) => {
   return (
     <div className={styles.MessageWrapper}>
-      <span className={styles.UsernameDisplay}>{props.user}:</span>
-      <span className={styles.Message}>{props.children} Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch</span>
+      <span className={styles.UsernameDisplay}>{props.user}: </span>
+      <span className={styles.Message}>{props.children}</span>
     </div>
   );
 }

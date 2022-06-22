@@ -1,17 +1,17 @@
 .MessageWrapper {
-  margin: .5rem 0;
-  word-break: break-all;
+  margin-bottom: .1rem;
   color: white;
-  background: black;
+  border-radius: 4px;
+  padding: .1rem 0;
 }
 
-.UsernameDisplay {
-  display: block;
+.MessageWrapper:nth-child(1) {
   margin-bottom: .5rem;
 }
 
+.UsernameDisplay {
+  font-weight: 600;
+}
+
 .Message {
-  word-break: break-all;
-  white-space: normal;
-  padding-left: 1rem;
 }

@@ -1,30 +1,31 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
+//import Image from 'next/image';
+import { useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import styles from '../styles/Home.module.css';
 import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon } from '@primer/octicons-react';
 import NavbarButton from '../components/NavbarButton';
 import ChatMessage from '../components/ChatMessage';
+import { SocketContext } from '../context/SocketContext';
 
 const Home: NextPage = () => {
-  const [socket, setSocket] = useState(null as any);
+  const socket = useContext(SocketContext);
+  //const [socket, setSocket] = useState(null as any);
   const [socketConnected, setSocketConnected] = useState(false);
   const [room, setRoom] = useState('');
   const [url, setUrl] = useState('');
-
-  // useEffect(() => {
-  //   const newSocket = io();
-  //   setSocket(newSocket);
-  // }, []);
+  const [roomPassword, setRoomPassword] = useState('');
 
   useEffect(() => {
-    if (!socket) return;
-    if (!room) return;
+    if (!socket) return console.log('BRUHHH');
+    console.log('debug!!')
+
+    setSocketConnected(socket.connected);
     
     socket.on('connect', () => {
       setSocketConnected(socket.connected);
+      console.log('ayo the fuck goin on')
     });
 
     socket.on('disconnect', () => {
@@ -34,7 +35,7 @@ const Home: NextPage = () => {
     socket.on('disconnected', (status: string) => {
       console.log(status);
     });
-  }, [socket]);
+  }, []);
 
   const handleSocketConnection = () => {
     if (socketConnected)
@@ -45,19 +46,12 @@ const Home: NextPage = () => {
   }
 
   const handleRoomConnection = () => {
-    if (!socketConnected) {
-      const correctedRoomCode = room.split(" ").join("");
-      console.log(correctedRoomCode.length >= 5);
-      if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
-        // socket.emit('join', room);
-        setSocket(io({
-          query: {
-            roomCode: room
-          }
-        }));
-      } else {
-        alert('ayo check yo room code');
-      }
+    const correctedRoomCode = room.split(" ").join("");
+    console.log(correctedRoomCode.length >= 5);
+    if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
+      socket.emit('join', {room: correctedRoomCode, password: roomPassword});
+    } else {
+      alert('ayo check yo room code');
     }
   }
 
@@ -106,8 +100,8 @@ const Home: NextPage = () => {
 
       <div className={styles.chatRoom}>
         <div className={styles.MessagesHandler}>
-          <ChatMessage user={"Example"}>
-            {"Yellow"}
+          <ChatMessage user={"User1"}>
+            Hello World!
           </ChatMessage>
         </div>
         <div className={styles.chatMessengerHandler}>
@@ -116,20 +110,23 @@ const Home: NextPage = () => {
         </div>
       </div>
 
-      {/* <input
-        type="button"
-        style={{ marginTop: 10 }}
-        value={socketConnected ? 'Disconnect' : 'Connect'}
-        disabled={!socket}
-        onClick={handleSocketConnection} />
+      <div className='socketIODebugMenu'>
+        <input
+          type="button"
+          style={{ marginTop: 10 }}
+          value={socketConnected ? 'Disconnect' : 'Connect'}
+          disabled={!socket}
+          onClick={handleSocketConnection} />
 
-      <input type="text" onChange={ (e) => setRoom(e.target.value) } />
+        room code: <input type="text" onChange={ (e) => setRoom(e.target.value) } />
+        password: <input type="text" onChange={ (e) => setRoomPassword(e.target.value) } />
 
-      <input type="button" value={`join '${room}' room`} onClick={handleRoomConnection} />
+        <input type="button" value={`join '${room}' room`} onClick={handleRoomConnection} />
 
-      <input type="text" onChange={ (e) => setUrl(e.target.value) } />
+        <input type="text" onChange={ (e) => setUrl(e.target.value) } />
 
-      <input type="button" value={`request song`} onClick={handleSongRequest} /> */}
+        <input type="button" value={`request song`} onClick={handleSongRequest} />
+      </div>
     </div>
   )
 }

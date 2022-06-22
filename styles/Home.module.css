@@ -1,6 +1,6 @@
 .container {
   display: grid;
-  grid-template-columns: minmax(24px, 60px) 4fr 1fr;
+  grid-template-columns: minmax(24px, 60px) 4fr 1.5fr;
   height: 100vh;
 }
 
@@ -135,15 +135,32 @@
 
 .chatMessengerHandler textarea {
   resize: none;
-  text-align: center;
+  overflow-y: scroll;
   width: 100%;
   margin: auto 0;
-  height: 1.5rem;
-  padding: 1rem 0;
+  padding: calc(.37rem * 1.5) .5rem; /*i know this is a broken number but come ON it's centered alright?*/
+  height: calc(2rem * 1.5);
+  margin-right: 1rem;
+  font-size: 13px;
 }
 
 .chatMessengerHandler button {
-  height: fit-content;
+  height: 100%;
+  background: #4ec163;
+  border: none;
+  border-radius: 4px;
+  padding: 0 .7rem;
+  transition: .2s;
+  color: white;
+}
+
+.chatMessengerHandler button:hover {
+  background:#20a038;
+}
+
+.chatMessengerHandler button:active {
+  transition: .1s;
+  background:#146122;
 }
 
 @media (max-width: 600px) {

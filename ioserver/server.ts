@@ -1,9 +1,11 @@
 import { parse } from 'url'
 import next from 'next'
-import express from 'express';
+import express, { Request, Response } from 'express';
 import http from 'http';
 import socket, { Server } from 'socket.io';
+import routes from './routes';
 import axios from 'axios';
+import filterMusicPlaylist from '../utils/filterMusicPlaylist';
 
 const ROOM_LENGTH = 5;
 
@@ -14,25 +16,24 @@ const handle = app.getRequestHandler();
 
 let musics: { song_url: string; time_to_play: number; duration: number; }[] = [];
 
-const youtubeDurationToSeconds = (duration: string) => {
+const youtubeDurationToSeconds = (duration: string) => { // returns everything into seconds
   const tempArray = duration.replace('PT', '').split('M');
   const seconds = Number(tempArray[tempArray.length - 1].replace('S', ''));
-  if (tempArray[0].includes('H')) {
+
+  if (tempArray[0].includes('H')) { // returns with hours, minutes and seconds
     const divideHoursAndMinutes = tempArray[0].split('H');
     const hours = Number(divideHoursAndMinutes[0]);
     const minutes = Number(divideHoursAndMinutes[1]);
 
     return (hours*60)*60+minutes*60+seconds;
-  } else if (tempArray.length == 2) {
+
+  } else if (tempArray.length == 2) { // returns minutes and seconds
+
     const minutes = Number(tempArray[0]);
 
     return minutes*60+seconds;
   }
-  return seconds;
-}
-
-const filterMusicPlaylist = () => {
-  musics = musics.filter((item: any) => item.time_to_play >= Date.now()-(item.duration*1000));
+  return seconds; // returns seconds only
 }
 
 const queueMusicHandler = async (link: string) => {
@@ -49,14 +50,14 @@ const queueMusicHandler = async (link: string) => {
     duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string);
 
     let time_to_play: number;
-    let threshold = 1 * 1000; // 1 second
+    let threshold = .5 * 1000; // half a second
 
     if (musics.length === 0 ) {
       time_to_play = Date.now();
     } else {
       time_to_play = musics[musics.length - 1].time_to_play + ((musics[musics.length - 1].duration + .5) * threshold);
     }
-    filterMusicPlaylist();
+    musics = filterMusicPlaylist(musics);
 
     musics.push({
       song_url: link,
@@ -76,6 +77,7 @@ app.prepare().then(() => {
   });
 
   const clients: Array<any> = [];
+  server.use('/', routes);
 
   // room created
   io.of('/').adapter.on('create-room', (room) => { 
@@ -90,20 +92,13 @@ app.prepare().then(() => {
   });
 
   io.on('connection', (socket: any) => {
-    var roomCode = socket.handshake.query.roomCode;
-    if (!roomCode || roomCode.length <= ROOM_LENGTH - 1) {  
-      socket.emit('disconnected', 'You must provide a valid room code to make an IO connection!')
-      socket.disconnect();
-    } //temp server handler
-    socket.join(roomCode);
     console.log(`Cliente conectado => ${socket.id}`);
-    clients.push(socket);
 
-    // socket.on('join', (room: string, password: string) => {
-    //   if (room.length !== ROOM_LENGTH) return;
-    //   socket.join(room);
-    //   console.log(socket.rooms);
-    // });
+    socket.on('join', (room: string, password: string) => {
+      if (room.length !== ROOM_LENGTH) return;
+      socket.join(room);
+      console.log(socket.rooms);
+    });
 
     socket.on('request-song', async (song: string) => {
       if (socket.rooms >= 3) {
@@ -120,29 +115,8 @@ app.prepare().then(() => {
     })
   });
 
-  server.get('/io/get-songs', (req: any, res: any) => {
-    return res.json(musics as any);
-  });
-
-  server.get('/io/sync', (_: any, res: any) => {
-    filterMusicPlaylist();
-
-    if (musics.length == 0) return res.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
-
-    let durationArray = musics.map( ({ time_to_play }) => time_to_play );
-    const timeNow = Date.now();
-    const currentTime = durationArray.reduce(function(prev: number, curr: number) {
-      if (timeNow - curr > 0 && prev - curr < timeNow - curr) {
-          return curr;
-      } else {
-          return prev;
-      }
-    });
-
-    return res.status(200).json({ message: musics.find(item => item.time_to_play === currentTime) });
-  });
-  
-  server.all('*', (req: any, res: any) => {
+  // SET SERVER
+  server.all('*', (req: Request, res: Response) => {
     const parsedUrl = parse(req.url, true);
     return handle(req, res, parsedUrl);
   });

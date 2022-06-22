@@ -57,7 +57,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     client.connect(function (err, result) {
       assert.equal(null, err);
-      // console.log("Conectado ao server mongo => "+ result!.options.srvHost);
+      console.log("Conectado ao server mongo => "+ result!.options.srvHost);
       const email = req.body.email;
       const password = req.body.password;
 
