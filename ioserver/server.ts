@@ -6,6 +6,8 @@ import socket, { Server } from 'socket.io';
 import routes from './routes';
 import axios from 'axios';
 import filterMusicPlaylist from '../utils/filterMusicPlaylist';
+import { userInfo } from 'os';
+import { Socket } from 'socket.io-client';
 
 const ROOM_LENGTH = 5;
 
@@ -77,7 +79,7 @@ app.prepare().then(() => {
   });
 
   const clients: Array<any> = [];
-  server.use('/', routes);
+  server.use('/io/', routes);
 
   // room created
   io.of('/').adapter.on('create-room', (room) => { 
@@ -94,11 +96,18 @@ app.prepare().then(() => {
   io.on('connection', (socket: any) => {
     console.log(`Cliente conectado => ${socket.id}`);
 
-    socket.on('join', (room: string, password: string) => {
+    socket.on('join', ({room, password}: {room: string, password: string}) => {
       if (room.length !== ROOM_LENGTH) return;
       socket.join(room);
+      
       console.log(socket.rooms);
+      io.in(room).emit('message', {user: socket.id, text: 'message'});
     });
+
+    socket.on('sendMessage', (message: string) => {
+      console.log(socket.rooms);
+      io.to('aaaaa').emit('message', {user: socket.id, text: message, obj: socket.rooms}); //temp
+    })
 
     socket.on('request-song', async (song: string) => {
       if (socket.rooms >= 3) {

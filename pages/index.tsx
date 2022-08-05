@@ -1,8 +1,7 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 //import Image from 'next/image';
-import { useContext, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import { createRef, useContext, useEffect, useRef, useState } from 'react';
 import styles from '../styles/Home.module.css';
 import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon } from '@primer/octicons-react';
 import NavbarButton from '../components/NavbarButton';
@@ -11,8 +10,9 @@ import { SocketContext } from '../context/SocketContext';
 
 const Home: NextPage = () => {
   const socket = useContext(SocketContext);
-  //const [socket, setSocket] = useState(null as any);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [messages, setMessages] = useState([] as any);
+  const [message, setMessage] = useState('');
   const [room, setRoom] = useState('');
   const [url, setUrl] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
@@ -47,9 +47,17 @@ const Home: NextPage = () => {
 
   const handleRoomConnection = () => {
     const correctedRoomCode = room.split(" ").join("");
-    console.log(correctedRoomCode.length >= 5);
+    console.log(correctedRoomCode.length >= 5, room.length);
     if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
-      socket.emit('join', {room: correctedRoomCode, password: roomPassword});
+      socket.emit('join', {room: correctedRoomCode, password: roomPassword}, (err: any) => {
+        if (err) console.log('oh no! anyway...');
+        return;
+      });
+      socket.on("message", (msg: any) => {
+        setMessages((messages: any) => [...messages, msg]);
+        console.log('kljsdakljsdkljd');
+      });
+      console.log('kljsdakljsdklj');
     } else {
       alert('ayo check yo room code');
     }
@@ -59,6 +67,12 @@ const Home: NextPage = () => {
     if (socketConnected) {
       socket.emit('request-song', url);
     }
+  }
+
+  const handleSendMessage = () => {
+    socket.emit('sendMessage', message, () => {setMessage('')})
+    console.log(messages);
+    setMessage('');
   }
 
   return (
@@ -100,13 +114,15 @@ const Home: NextPage = () => {
 
       <div className={styles.chatRoom}>
         <div className={styles.MessagesHandler}>
-          <ChatMessage user={"User1"}>
-            Hello World!
-          </ChatMessage>
+          {messages.length > 0 ? messages.map((msg: any, i: number) => {console.log(msg); return (
+            <ChatMessage key={i} user={msg.user as string}>
+              {msg.text}
+            </ChatMessage>
+          )}).reverse() : ('Nada Além de Galinhas!')}
         </div>
         <div className={styles.chatMessengerHandler}>
-          <textarea rows={3} name="" id="" />
-          <button>Send</button>
+          <textarea onChange={(e) => setMessage(e.target.value)} value={message} onKeyDown={(event) => {if (event.key === 'Enter') {handleSendMessage(); event.preventDefault()}}} rows={3} name="" id="" />
+          <button onClick={handleSendMessage}>Send</button>
         </div>
       </div>
 
