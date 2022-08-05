@@ -3,7 +3,7 @@ import e from 'express';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React, { useState } from 'react';
-import styles from '../styles/Home.module.css';
+import styles from '../styles/Login.module.css';
 
 const Login: NextPage = () => {
   const [email, setEmail] = useState('' as any);
@@ -15,6 +15,13 @@ const Login: NextPage = () => {
     axios.post('http://localhost:3000/api/auth', {email, password});
   }
 
+  function handleDisabledButton() {
+    if (email.length !== 0 && password.length !== 0) {
+        return false;
+    }
+    return true;
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -23,10 +30,29 @@ const Login: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      e-mail: <input type="text" onChange={ (e) => setEmail(e.target.value) } />
-      password: <input type="password" onChange={ (e) => setPassword(e.target.value) } />
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="#4E9F3D" fillOpacity="1" d="M0,192L48,208C96,224,192,256,288,245.3C384,235,480,181,576,170.7C672,160,768,192,864,213.3C960,235,1056,245,1152,245.3C1248,245,1344,235,1392,229.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>
+      <div className={styles.mainContainer}>
+        <form onSubmit={handleAuthentication} className={styles.loginHandler}>
+            <h1>Sign in</h1>
 
-      <input type="button" value={`login`} onClick={handleAuthentication} />
+            <div className={styles.inputContainer}>
+              <label htmlFor="email" id="email_id" className={Boolean(email) ? styles.active : ''}>E-mail</label>
+              <input id="email" name="email" className={styles.loginInput} type="email" onChange={ (e) => setEmail(e.target.value) } required={true} />
+            </div>
+            <div className={styles.inputContainer}>
+              <label htmlFor="pass" id="password_id" className={Boolean(password) ? styles.active : ''}>Password</label>
+              <input minLength={8} id="pass" name="pass" className={styles.loginInput} type="password" onChange={ (e) => setPassword(e.target.value) } required={true} />
+            </div>
+
+            <button type="submit" disabled={handleDisabledButton()}>
+              <strong>Login!</strong>
+            </button>
+        </form>
+
+        <div className={styles.illustrationsContainer}>
+          PLACEHOLDER
+        </div>
+      </div>
     </div>
   )
 }

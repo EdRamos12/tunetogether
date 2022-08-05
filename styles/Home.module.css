@@ -163,6 +163,11 @@
   background:#146122;
 }
 
+.chatMessengerHandler button:disabled {
+  background:#5b5f5c;
+  cursor: not-allowed;
+}
+
 @media (max-width: 600px) {
   .grid {
     width: 100%;

@@ -8,6 +8,12 @@ import NavbarButton from '../components/NavbarButton';
 import ChatMessage from '../components/ChatMessage';
 import { SocketContext } from '../context/SocketContext';
 
+const formatMessage = (str: string) => {
+  const formattedString = str.replace(/\s{2,}/g, ' ').trim();
+  if (formattedString === null || formattedString.match(/^ *$/) !== null) return false;
+  return formattedString;
+}
+
 const Home: NextPage = () => {
   const socket = useContext(SocketContext);
   const [socketConnected, setSocketConnected] = useState(false);
@@ -17,10 +23,9 @@ const Home: NextPage = () => {
   const [url, setUrl] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
 
-  useEffect(() => {
-    if (!socket) return console.log('BRUHHH');
-    console.log('debug!!')
 
+  // checks to see if socket successfully connected to server
+  useEffect(() => {
     setSocketConnected(socket.connected);
     
     socket.on('connect', () => {
@@ -37,6 +42,7 @@ const Home: NextPage = () => {
     });
   }, []);
 
+  // simple socket connection handler
   const handleSocketConnection = () => {
     if (socketConnected)
       socket.disconnect();
@@ -45,6 +51,8 @@ const Home: NextPage = () => {
     }
   }
 
+  // now this is fun
+  // once 
   const handleRoomConnection = () => {
     const correctedRoomCode = room.split(" ").join("");
     console.log(correctedRoomCode.length >= 5, room.length);
@@ -70,7 +78,9 @@ const Home: NextPage = () => {
   }
 
   const handleSendMessage = () => {
-    socket.emit('sendMessage', message, () => {setMessage('')})
+    const formattedMessage = formatMessage(message);
+    if (formattedMessage == false) return;
+    socket.emit('sendMessage', formattedMessage, () => {setMessage('')});
     console.log(messages);
     setMessage('');
   }
@@ -122,7 +132,7 @@ const Home: NextPage = () => {
         </div>
         <div className={styles.chatMessengerHandler}>
           <textarea onChange={(e) => setMessage(e.target.value)} value={message} onKeyDown={(event) => {if (event.key === 'Enter') {handleSendMessage(); event.preventDefault()}}} rows={3} name="" id="" />
-          <button onClick={handleSendMessage}>Send</button>
+          <button disabled={formatMessage(message) == false ? true : false} onClick={handleSendMessage}>Send</button>
         </div>
       </div>
 

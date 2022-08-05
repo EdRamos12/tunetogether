@@ -1,0 +1,103 @@
+.container {
+  width: 100wh;
+  height: 100vh;
+  background: var(--black);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  font-size: 21px;
+}
+
+
+.loginInput {
+  color: black;
+  padding: 15px;
+  max-width: 100%;
+  border-radius: 6px;
+  border: none;
+  transition: .1s;
+  font-size: 16px;
+  width: 300px;
+}
+
+.container svg {
+  margin-top: -100px;
+  max-width: 100%;
+}
+
+.mainContainer {
+  display: grid;
+  grid-template-columns: auto auto;
+  padding: 2vh 5vh;
+  background: var(--green);
+  flex: 1 1 auto;
+}
+
+.mainContainer label {
+  display: block;
+}
+
+.loginHandler {
+  display: flex;
+  flex-direction: column;
+  margin-top: -22vh;
+}
+
+.loginHandler, .illustrationContainer {
+  flex: 1 1 auto;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.inputContainer label {
+  height: 0;
+  position: relative;
+  top: 10px;
+  left: 16px;
+  color: #0000006e;
+  pointer-events: none;
+  transition: .1s;
+}
+
+.inputContainer label.active {
+  top: 4px;
+  left: 10px;
+  font-size: 15px;
+}
+
+.inputContainer label.active + .loginInput {
+  padding-top: 20px;
+}
+
+.loginHandler button {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 5px;
+  color: white;
+  background: var(--bluey-green);
+  margin-top: 20px;
+  font-size: 20px;
+  transition: .25s
+}
+
+.loginHandler button:disabled, .loginHandler button:disabled:hover {
+  cursor: default;
+  background: #84d59c;
+  color: #ffffff8f;
+}
+
+.loginHandler button:hover {
+  background: var(--dark-green);
+}
+
+.inputContainer {
+  margin: 10px 0;
+}
+
+@media (max-width: 700px) {
+  .mainContainer {
+    display: flex;
+    flex-direction: column;
+  }
+}
