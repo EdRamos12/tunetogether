@@ -30,14 +30,14 @@ const Home: NextPage = () => {
     
     socket.on('connect', () => {
       setSocketConnected(socket.connected);
-      console.log('ayo the fuck goin on')
     });
 
     socket.on('disconnect', () => {
-      setSocketConnected(() => {console.log(socket.connected); return socket.connected});
+      setSocketConnected(() => (socket.connected));
     });
 
     socket.on('disconnected', (status: string) => {
+      // just to make sure to document everything
       console.log(status);
     });
   }, []);
@@ -55,19 +55,17 @@ const Home: NextPage = () => {
   // once 
   const handleRoomConnection = () => {
     const correctedRoomCode = room.split(" ").join("");
-    console.log(correctedRoomCode.length >= 5, room.length);
+    //console.log(correctedRoomCode.length >= 5, room.length);
     if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
       socket.emit('join', {room: correctedRoomCode, password: roomPassword}, (err: any) => {
         if (err) console.log('oh no! anyway...');
         return;
       });
-      socket.on("message", (msg: any) => {
-        setMessages((messages: any) => [...messages, msg]);
-        console.log('kljsdakljsdkljd');
+      socket.on('message', (data: any) => {
+        setMessages((messages: any) => [...messages, data]);
       });
-      console.log('kljsdakljsdklj');
     } else {
-      alert('ayo check yo room code');
+      alert('Room code is less than the accepted!');
     }
   }
 
@@ -80,9 +78,7 @@ const Home: NextPage = () => {
   const handleSendMessage = () => {
     const formattedMessage = formatMessage(message);
     if (formattedMessage == false) return;
-    socket.emit('sendMessage', formattedMessage, () => {setMessage('')});
-    console.log(messages);
-    setMessage('');
+    socket.emit('send-message', {message: formattedMessage, room}, () => {setMessage('')});
   }
 
   return (
@@ -124,11 +120,11 @@ const Home: NextPage = () => {
 
       <div className={styles.chatRoom}>
         <div className={styles.MessagesHandler}>
-          {messages.length > 0 ? messages.map((msg: any, i: number) => {console.log(msg); return (
+          {messages.length > 0 ? messages.map((msg: any, i: number) => (
             <ChatMessage key={i} user={msg.user as string}>
               {msg.text}
             </ChatMessage>
-          )}).reverse() : ('Nada Além de Galinhas!')}
+          )).reverse() : ('Nada Além de Galinhas!')}
         </div>
         <div className={styles.chatMessengerHandler}>
           <textarea onChange={(e) => setMessage(e.target.value)} value={message} onKeyDown={(event) => {if (event.key === 'Enter') {handleSendMessage(); event.preventDefault()}}} rows={3} name="" id="" />
@@ -153,6 +149,7 @@ const Home: NextPage = () => {
 
         <input type="button" value={`request song`} onClick={handleSongRequest} />
       </div>
+      
     </div>
   )
 }

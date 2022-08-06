@@ -2,12 +2,10 @@ import { parse } from 'url'
 import next from 'next'
 import express, { Request, Response } from 'express';
 import http from 'http';
-import socket, { Server } from 'socket.io';
+import { Server } from 'socket.io';
 import routes from './routes';
 import axios from 'axios';
 import filterMusicPlaylist from '../utils/filterMusicPlaylist';
-import { userInfo } from 'os';
-import { Socket } from 'socket.io-client';
 
 const ROOM_LENGTH = 5;
 
@@ -81,13 +79,13 @@ app.prepare().then(() => {
   const clients: Array<any> = [];
   server.use('/io/', routes);
 
-  // room created
+  // room created, happens when someone tries to join a room for the first time
   io.of('/').adapter.on('create-room', (room) => { 
     if (room.length > ROOM_LENGTH) return;
     console.log(`IO Room ${room} has been created`);
   });
 
-  // room deleted
+  // room deleted, happens when no one is at the room anymore
   io.of('/').adapter.on('delete-room', (room) => { 
     if (room.length > ROOM_LENGTH) return;
     console.log(`IO Room ${room} has been deleted`);
@@ -97,17 +95,29 @@ app.prepare().then(() => {
     console.log(`Cliente conectado => ${socket.id}`);
 
     socket.on('join', ({room, password}: {room: string, password: string}) => {
-      if (room.length !== ROOM_LENGTH) return;
+      //server checks if room length is the same as defined at the top
+      if (room.length !== ROOM_LENGTH) return new Error('Room length not enough! At least should be ' + ROOM_LENGTH);
+      // server checks if user is already at a room, and if it is, leave the old one
+      if (socket.rooms.size > 1) { 
+        socket.rooms.forEach((element: string) => {
+          if (element.length === ROOM_LENGTH) {
+            // even *if* socket is at more than one room (theoretically)
+            // it will leave automatically
+            socket.leave(element); 
+          }
+        });
+      }
       socket.join(room);
-      
-      console.log(socket.rooms);
-      io.in(room).emit('message', {user: socket.id, text: 'message'});
+      // temporary announcing that user joined the room
+      io.in(room).emit('message', {user: socket.id, text: 'i just entered here'});
     });
 
-    socket.on('sendMessage', (message: string) => {
-      console.log(socket.rooms);
-      io.to('aaaaa').emit('message', {user: socket.id, text: message, obj: socket.rooms}); //temp
-    })
+    socket.on('send-message', (data: {message: string, room: string}) => {
+      const {message, room} = data;
+      // server checks to see if socket is sending message to another room, other than theirs
+      if (!socket.rooms.has(room)) {socket.emit('exception', {errorMessage: 'Room identification error! (your room is not right with the server).'});}
+      else io.to(room).emit('message', {user: socket.id, text: message});
+    });
 
     socket.on('request-song', async (song: string) => {
       if (socket.rooms >= 3) {
