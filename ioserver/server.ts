@@ -6,8 +6,11 @@ import { Server } from 'socket.io';
 import routes from './routes';
 import axios from 'axios';
 import filterMusicPlaylist from '../utils/filterMusicPlaylist';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import RoomController from './controllers/RoomController';
 
-const ROOM_LENGTH = 5;
+const ROOM_LENGTH = parseInt(process.env.ROOM_LENGTH as string);
+const roomController = new RoomController();
 
 const port = parseInt(process.env.PORT || '3000', 10);
 const dev = process.env.NODE_ENV !== 'production';
@@ -69,14 +72,19 @@ const queueMusicHandler = async (link: string) => {
   }
 }
 
+let io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
+
 app.prepare().then(() => {
   const server = express();
   const httpServer = http.createServer(server);
-  const io = new Server(httpServer, {
+  io = new Server(httpServer, {
     path: '/socket.io'
   });
-
-  const clients: Array<any> = [];
+  io.use((socket, next) => {
+    const header = socket.handshake.headers['authorization'];
+    console.log('Auth header from '+socket.id+':', header);
+    return next();
+  })
   server.use('/io/', routes);
 
   // room created, happens when someone tries to join a room for the first time
@@ -92,25 +100,9 @@ app.prepare().then(() => {
   });
 
   io.on('connection', (socket: any) => {
-    console.log(`Cliente conectado => ${socket.id}`);
+    console.log(`Client connected => ${socket.id}`);
 
-    socket.on('join', ({room, password}: {room: string, password: string}) => {
-      //server checks if room length is the same as defined at the top
-      if (room.length !== ROOM_LENGTH) return new Error('Room length not enough! At least should be ' + ROOM_LENGTH);
-      // server checks if user is already at a room, and if it is, leave the old one
-      if (socket.rooms.size > 1) { 
-        socket.rooms.forEach((element: string) => {
-          if (element.length === ROOM_LENGTH) {
-            // even *if* socket is at more than one room (theoretically)
-            // it will leave automatically
-            socket.leave(element); 
-          }
-        });
-      }
-      socket.join(room);
-      // temporary announcing that user joined the room
-      io.in(room).emit('message', {user: socket.id, text: 'i just entered here'});
-    });
+    roomController.roomManager(socket);
 
     socket.on('send-message', (data: {message: string, room: string}) => {
       const {message, room} = data;
@@ -129,8 +121,7 @@ app.prepare().then(() => {
     });
 
     socket.on('disconnect' , () => {
-      console.log(`Cliente desconectado => ${socket.id}`);
-      clients.splice(clients.indexOf(socket), 1);
+      console.log(`Client disconnected => ${socket.id}`);
     })
   });
 
@@ -144,3 +135,5 @@ app.prepare().then(() => {
     console.log(`> Server listening at http://localhost:${port} as ${dev ? 'development' : process.env.NODE_ENV}`);
   });
 });
+
+export { io };

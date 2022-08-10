@@ -61,26 +61,26 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const email = req.body.email;
       const password = req.body.password;
 
-      return findUser(client, process.env.DB_NAME as string, email, function (err: Error, user: userInterfaceDB | null) {
+      return findUser(client, process.env.DB_NAME as string, email, (err: Error, user: userInterfaceDB | null) => {
           //console.log(user);
           if (err) {
-            res.status(500).json({ error: true, message: "Erro ao achar usuário" });
-            return;
+            return res.status(500).json({ error: true, message: "Erro ao achar usuário: "+err.message });;
           }
           if (!user) {
-            //se n tem usuario, bo criar
-            createUser(client, process.env.DB_NAME as string, email, password, function (
+            // if user doesn't exist, then lets create
+            createUser(client, process.env.DB_NAME as string, email, password, (
                 creationResult: InsertOneResult<Document> | undefined,
                 email: string,
                 userId: string
-              ) {
-                if (creationResult!.acknowledged === true) {
+              ) => {
+                if (creationResult!.acknowledged === true) { // if created, then return token
                   const token = sign({
                       userId,
                       email,
                   }, process.env.JWT_SECRET as string, {
                       expiresIn: 10800,
                   });
+                  // TODO: make it go to cookie
                   res.status(200).json({ token });
                   return;
                 } else {
@@ -90,7 +90,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               }
             );
           } else {
-            // se o usuario existe
+            // if user exists, return with error
             res.status(403).json({ error: true, message: "Email ja existe." });
           }
         }

@@ -1,31 +1,79 @@
-import axios from "axios";
-import { NextApiRequest, NextApiResponse } from "next";
-import { parse } from 'url';
-import filterMusicPlaylist from "../../utils/filterMusicPlaylist";
+import assert from "assert";
+import client from "../../utils/client";
+import { io } from "../server";
+const ROOM_LENGTH = parseInt(process.env.ROOM_LENGTH as string);
 
-let musics: { song_url: string; time_to_play: number; duration: number; }[] = [];
-
-const youtubeDurationToSeconds = (duration: string) => { // returns everything into seconds
-  const tempArray = duration.replace('PT', '').split('M');
-  const seconds = Number(tempArray[tempArray.length - 1].replace('S', ''));
-
-  if (tempArray[0].includes('H')) { // returns with hours, minutes and seconds
-    const divideHoursAndMinutes = tempArray[0].split('H');
-    const hours = Number(divideHoursAndMinutes[0]);
-    const minutes = Number(divideHoursAndMinutes[1]);
-
-    return (hours*60)*60+minutes*60+seconds;
-
-  } else if (tempArray.length == 2) { // returns minutes and seconds
-
-    const minutes = Number(tempArray[0]);
-
-    return minutes*60+seconds;
-  }
-  return seconds; // returns seconds only
+const leaveAllRooms = (obj: any) => {
+  obj.rooms.forEach((element: string) => {
+    if (element.length === ROOM_LENGTH) {
+      // even *if* socket is at more than one room (theoretically)
+      // it will leave automatically
+      obj.leave(element); 
+    }
+  });
 }
 
 export default class RoomController {
-  async get() { // TODO
+  async roomManager(socket: any) { // TODO
+    socket.on('join', ({room, password}: {room: string, password: string}) => {
+      //server checks if room length is the same as defined at the top
+      if (room.length !== ROOM_LENGTH) return new Error('Room length not enough! At least should be ' + ROOM_LENGTH);
+      // server checks if user is already at a room, and if it is, leave the old one
+      if (socket.rooms.size > 1) { 
+        leaveAllRooms(socket);
+      }
+      socket.join(room);
+
+      const collection = client.db(process.env.DB_NAME as string).collection("rooms");
+        collection.findOne({ room_id: room }, (err, data) => {
+          if (err) {
+            socket.emit('server-exception', 'there was an error trying to find that ');
+          }
+
+          if (!data || data == null) { // if room is non existent, then create room in DB
+            collection.insertOne({
+              room_id: room,
+              password: password,
+              owner: socket.id, //replace with actual user
+              song_list: [],
+              users: [socket.id]
+            }, (err, _) => {
+              assert.equal(err, null);
+              // temporary announcing that user joined the room
+              io.in(room).emit('message', {user: socket.id, text: 'i just created the room'});
+            });
+          } else {
+            if (!data.password) {
+              collection.updateOne(data, {
+                $push: { users: socket.id } // replace with actual user
+              }, (err, _) => {
+                assert.equal(err, null);
+                // temporary announcing that user joined the room
+                io.in(room).emit('message', {user: socket.id, text: 'i just joined the room'});
+              });
+            } else {
+              if (data.password == password) {
+                collection.updateOne(data, {
+                  $push: { users: socket.id } // replace with actual user
+                }, (err, _) => {
+                  assert.equal(err, null);
+                  // temporary announcing that user joined the room
+                  io.in(room).emit('message', {user: socket.id, text: 'i just joined the room'});
+                });
+              } else {
+                socket.emit('password-exception', 'Incorrect password!');
+              }
+            }
+          }
+      });
+      
+    });
+    
+    socket.on('leave', () => {
+      const collection = client.db(process.env.DB_NAME as string).collection('rooms');
+      // later update with user data
+      collection.updateOne({ users: socket.id }, { $pull: { users: socket.id } });
+      leaveAllRooms(socket);
+    });
   }
 }

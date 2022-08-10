@@ -78,7 +78,8 @@ const Home: NextPage = () => {
   const handleSendMessage = () => {
     const formattedMessage = formatMessage(message);
     if (formattedMessage == false) return;
-    socket.emit('send-message', {message: formattedMessage, room}, () => {setMessage('')});
+    socket.emit('send-message', {message: formattedMessage, room});
+    setMessage('');
   }
 
   return (
