@@ -67,7 +67,6 @@ const queueMusicHandler = async (link: string) => {
       collection.insertOne(musicToRequest, (err, userCreated) => {
           assert.equal(err, null);
 
-
         }
       );
     });
@@ -101,11 +100,12 @@ export default class MusicQueueController {
     return rsp.status(200).json({ message: musics.find(item => item.time_to_play === currentTime) });
   }
 
-  request(socket: any) {
+  setIORequestController(socket: any) {
     socket.on('request-song', async (song: string) => {
       if (socket.rooms >= 3) {
         socket.emit('request-song-status', 'You are on two rooms! Leave one so you can submit to a proper room!');
       }
+      
 
       await queueMusicHandler(song);
       console.log('song requested successfully => '+musics[musics.length-1]);

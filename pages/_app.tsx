@@ -1,5 +1,4 @@
 import '../styles/globals.css'
-import ReactDOM from "react-dom/client";
 import type { AppProps } from 'next/app'
 import { SocketProvider } from '../context/SocketContext'
 import React from 'react'

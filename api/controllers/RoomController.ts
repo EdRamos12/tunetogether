@@ -14,7 +14,7 @@ const leaveAllRooms = (obj: any) => {
 }
 
 export default class RoomController {
-  async roomManager(socket: any) { // TODO
+  async setIORoomController(socket: any) { // TODO
     socket.on('join', ({room, password}: {room: string, password: string}) => {
       //server checks if room length is the same as defined at the top
       if (room.length !== ROOM_LENGTH) return new Error('Room length not enough! At least should be ' + ROOM_LENGTH);
@@ -28,6 +28,7 @@ export default class RoomController {
         collection.findOne({ room_id: room }, (err, data) => {
           if (err) {
             socket.emit('server-exception', 'there was an error trying to find that ');
+            console.log(err);
           }
 
           if (!data || data == null) { // if room is non existent, then create room in DB
