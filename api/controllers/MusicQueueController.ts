@@ -4,6 +4,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { parse } from 'url';
 import client from '../../utils/client';
 import filterMusicPlaylist from '../../utils/filterMusicPlaylist';
+import { NextApiRequestLoggedIn } from '../../utils/authMiddleware';
 
 // TODO:
 // transform this var to db info (aka instead of var, use the database dumass)
@@ -76,13 +77,24 @@ const queueMusicHandler = async (link: string) => {
 }
 
 export default class MusicQueueController {
-  get(rq: NextApiRequest, rsp: NextApiResponse) { // returns current music list
+  get(rq: NextApiRequestLoggedIn, rsp: NextApiResponse) { // returns current music list
     // TODO:
     // conditional to return from entered room
+
+    // const collection = client.db(process.env.DB_NAME as string).collection("rooms");
+
+    // collection.findOne({ room_id: rq.cookies.__bruh }, (err, data) => {
+
+    // });
+
+    console.log(rq.userId);
+
     return rsp.json(musics as any);
   }
 
-  sync(rq: NextApiRequest, rsp: NextApiResponse) { // returns DATE milliseconds to client, so client can get back on track
+  sync(_: NextApiRequest, rsp: NextApiResponse) { // returns DATE milliseconds to client, so client can get back on track
+    
+
     musics = filterMusicPlaylist(musics);
 
     if (musics.length == 0) return rsp.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
@@ -105,10 +117,9 @@ export default class MusicQueueController {
       if (socket.rooms >= 3) {
         socket.emit('request-song-status', 'You are on two rooms! Leave one so you can submit to a proper room!');
       }
-      
 
       await queueMusicHandler(song);
-      console.log('song requested successfully => '+musics[musics.length-1]);
+      console.log('song requested successfully => '+ musics[musics.length-1]);
     });
   }
 }

@@ -12,7 +12,7 @@ const Login: NextPage = () => {
   const handleAuthentication = (e: React.FormEvent) => {
     e.preventDefault();
 
-    axios.post('http://localhost:3000/api/auth', {email, password}).then((err) => {
+    axios.post('http://localhost:3000/io/login', {email, password}).then((err) => {
       Router.push('/');
     });
   }
@@ -52,7 +52,7 @@ const Login: NextPage = () => {
         </form>
 
         <div className={styles.illustrationsContainer}>
-          PLACEHOLDER
+          <img src="/undraw_imagination.svg" alt="An SVG of an eye" />
         </div>
       </div>
     </div>

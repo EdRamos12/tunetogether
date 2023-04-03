@@ -7,7 +7,7 @@ const SocketContext = React.createContext('' as any);
 
 const SocketProvider = ({ children }: any) => {
   useEffect(() => {
-    socket.connect(); // connect to server once context is loaded
+    if (!socket.connected) socket.connect(); // connect to server once context is loaded
     return () => {
       socket.disconnect() // and on unload, it disconnects (on most cases)
     }

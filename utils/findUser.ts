@@ -5,12 +5,13 @@ export interface userInterfaceDB {
   userId: string;
   email: string;
   password: string;
+  username: string;
 }
 
 interface findUserCallbackInterface {(
   err: Error, 
   user: userInterfaceDB | null
-): void | null}
+): void | null | any}
 
 export default async function findUser(client: MongoClient, dbName: string, email: string, callback: findUserCallbackInterface) {
   const collection = client.db(dbName).collection("user");

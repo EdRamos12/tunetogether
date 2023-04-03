@@ -31,35 +31,36 @@ export default class RoomController {
             console.log(err);
           }
 
-          if (!data || data == null) { // if room is non existent, then create room in DB
+          // if room is non existent, then create room in DB
+          if (!data || data == null) { 
             collection.insertOne({
               room_id: room,
-              password: password,
-              owner: socket.id, //replace with actual user
+              password,
+              owner: socket.userId,
               song_list: [],
-              users: [socket.id]
+              users: [socket.userId]
             }, (err, _) => {
               assert.equal(err, null);
               // temporary announcing that user joined the room
-              io.in(room).emit('message', {user: socket.id, text: 'i just created the room'});
+              io.in(room).emit('message', {user: socket.userId, text: 'i just created the room'});
             });
           } else {
             if (!data.password) {
               collection.updateOne(data, {
-                $push: { users: socket.id } // replace with actual user
+                $push: { users: socket.userId } // replace with actual user
               }, (err, _) => {
                 assert.equal(err, null);
                 // temporary announcing that user joined the room
-                io.in(room).emit('message', {user: socket.id, text: 'i just joined the room'});
+                io.in(room).emit('message', {user: socket.userId, text: 'i just joined the room'});
               });
             } else {
               if (data.password == password) {
                 collection.updateOne(data, {
-                  $push: { users: socket.id } // replace with actual user
+                  $push: { users: socket.userId } // replace with actual user
                 }, (err, _) => {
                   assert.equal(err, null);
                   // temporary announcing that user joined the room
-                  io.in(room).emit('message', {user: socket.id, text: 'i just joined the room'});
+                  io.in(room).emit('message', {user: socket.userId, text: 'i just joined the room'});
                 });
               } else {
                 socket.emit('password-exception', 'Incorrect password!');
@@ -73,7 +74,7 @@ export default class RoomController {
     socket.on('leave', () => {
       const collection = client.db(process.env.DB_NAME as string).collection('rooms');
       // later update with user data
-      collection.updateOne({ users: socket.id }, { $pull: { users: socket.id } });
+      collection.updateOne({ users: socket.userId }, { $pull: { users: socket.userId } });
       leaveAllRooms(socket);
     });
   }
