@@ -1,7 +1,7 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 //import Image from 'next/image';
-import { createRef, useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css';
 import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon } from '@primer/octicons-react';
 import NavbarButton from '../components/NavbarButton';
@@ -54,16 +54,18 @@ const Home: NextPage = () => {
   // now this is fun
   // once 
   const handleRoomConnection = () => {
-    const correctedRoomCode = room.split(" ").join("");
+    const correctedRoomCode = room.split(" ").join("").trim();
     //console.log(correctedRoomCode.length >= 5, room.length);
     if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
       socket.emit('join', {room: correctedRoomCode, password: roomPassword}, (err: any) => {
         if (err) console.log('oh no! anyway...');
+
+        socket.on('message', (data: any) => {
+          setMessages((messages: any) => [...messages, data]);
+        });
         return;
       });
-      socket.on('message', (data: any) => {
-        setMessages((messages: any) => [...messages, data]);
-      });
+      
     } else {
       alert('Room code is less than the accepted!');
     }

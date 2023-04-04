@@ -1,14 +1,21 @@
 import assert from 'assert';
 import axios from 'axios';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiResponse } from 'next';
 import { parse } from 'url';
 import client from '../../utils/client';
 import filterMusicPlaylist from '../../utils/filterMusicPlaylist';
 import { NextApiRequestLoggedIn } from '../../utils/authMiddleware';
+import { io } from "../server";
+
+interface SongDocument {
+  song_url: string,
+  time_to_play: number,
+  duration: number
+}
 
 // TODO:
 // transform this var to db info (aka instead of var, use the database dumass)
-let musics: { song_url: string; time_to_play: number; duration: number; }[] = [];
+//let musics: { song_url: string; time_to_play: number; duration: number; }[] = [];
 
 const youtubeDurationToSeconds = (duration: string) => { // returns everything into seconds
   const tempArray = duration.replace('PT', '').split('M');
@@ -30,86 +37,47 @@ const youtubeDurationToSeconds = (duration: string) => { // returns everything i
   return seconds; // returns seconds only
 }
 
-const queueMusicHandler = async (link: string) => {
-  let duration;
+const getCurrentSongTime = (musics: Array<SongDocument>) => {
+  const durationArray = musics.map(({ time_to_play }: {time_to_play: number}) => time_to_play);
 
-  const options = parse(link, true);
-  if (options.host?.includes('youtu.be') || options.host?.includes('youtube')) {
-    let ytOptions;
-    if (options.host?.includes('youtu.be')) {
-      ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${options.path?.replace('/', '')}&part=contentDetails&key=${process.env.YOUTUBE_API_KEY}`) as any;
+  const timeNow = Date.now();
+  
+  return durationArray.reduce(function(prev: number, curr: number) {
+    if (timeNow - curr > 0 && prev - curr < timeNow - curr) {
+        return curr;
     } else {
-      ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${options.query.v}&part=contentDetails&key=${process.env.YOUTUBE_API_KEY}`) as any;
+        return prev;
     }
-    duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string);
-
-    let time_to_play: number;
-    let threshold = .5 * 1000; // half a second
-
-    // request music list
-
-    if (musics.length === 0 ) {
-      time_to_play = Date.now();
-    } else {
-      time_to_play = musics[musics.length - 1].time_to_play + ((musics[musics.length - 1].duration + .5) * threshold);
-    }
-    musics = filterMusicPlaylist(musics);
-
-    let musicToRequest = {
-      song_url: link,
-      time_to_play,
-      duration
-    };
-
-    client.connect((err, result) => {
-      assert.equal(null, err);
-      console.log("Conectado ao server mongo => "+ result!.options.srvHost);
-      const collection = client.db(process.env.DB_NAME as string).collection("rooms");
-      collection.insertOne(musicToRequest, (err, userCreated) => {
-          assert.equal(err, null);
-
-        }
-      );
-    });
-
-    return options.path?.replace('/', '') || options.query.v; // temp
-  }
+  });
 }
 
 export default class MusicQueueController {
   get(rq: NextApiRequestLoggedIn, rsp: NextApiResponse) { // returns current music list
-    // TODO:
-    // conditional to return from entered room
+    const collection = client.db(process.env.DB_NAME as string).collection("rooms");
 
-    // const collection = client.db(process.env.DB_NAME as string).collection("rooms");
+    collection.findOne({ users: rq.userId }, (err, result) => {
+      assert.equal(null, err);
 
-    // collection.findOne({ room_id: rq.cookies.__bruh }, (err, data) => {
+      if (!result) return rsp.status(404).json({ error: true, message: "You are not in a room!" });
 
-    // });
+      const song_list = result.song_list as Array<SongDocument>
 
-    console.log(rq.userId);
-
-    return rsp.json(musics as any);
+      return rsp.json({ current_server_time: Date.now(), current_song: song_list.find((item: SongDocument) => item.time_to_play === getCurrentSongTime(song_list)), song_list });
+    });
   }
 
-  sync(_: NextApiRequest, rsp: NextApiResponse) { // returns DATE milliseconds to client, so client can get back on track
-    
+  sync(rq: NextApiRequestLoggedIn, rsp: NextApiResponse) { // returns DATE milliseconds to client, so client can get back on track
+    const collection = client.db(process.env.DB_NAME as string).collection("rooms");
+    collection.findOne({ users: rq.userId }, (err, result) => {
+      assert.equal(null, err);
+      if (!result) return rsp.status(404).json({ error: true, message: 'You are not in a room! Join a room before syncing up!' })
 
-    musics = filterMusicPlaylist(musics);
+      const musics = filterMusicPlaylist(result?.song_list);
 
-    if (musics.length == 0) return rsp.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
+      if (musics.length == 0) return rsp.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
 
-    let durationArray = musics.map( ({ time_to_play }) => time_to_play );
-    const timeNow = Date.now();
-    const currentTime = durationArray.reduce(function(prev: number, curr: number) {
-      if (timeNow - curr > 0 && prev - curr < timeNow - curr) {
-          return curr;
-      } else {
-          return prev;
-      }
-    });
-
-    return rsp.status(200).json({ message: musics.find(item => item.time_to_play === currentTime) });
+      return rsp.status(200).json({ current_server_time: Date.now(), current_song: musics.find((item: SongDocument) => item.time_to_play === getCurrentSongTime(musics)) });
+    })
   }
 
   setIORequestController(socket: any) {
@@ -118,8 +86,53 @@ export default class MusicQueueController {
         socket.emit('request-song-status', 'You are on two rooms! Leave one so you can submit to a proper room!');
       }
 
-      await queueMusicHandler(song);
-      console.log('song requested successfully => '+ musics[musics.length-1]);
+      client.connect((err) => {
+        assert.equal(null, err);
+
+        const collection = client.db(process.env.DB_NAME as string).collection("rooms");
+        collection.findOne({ users: socket.userId }, async (err, result: any) => {
+          assert.equal(null, err);
+
+          let duration;
+          const options = parse(song, true);
+
+          if (options.host?.includes('youtu.be') || options.host?.includes('youtube')) {
+            let ytOptions;
+            if (options.host?.includes('youtu.be')) {
+              ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${options.path?.replace('/', '')}&part=contentDetails&key=${process.env.YOUTUBE_API_KEY}`) as any;
+            } else {
+              ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${options.query.v}&part=contentDetails&key=${process.env.YOUTUBE_API_KEY}`) as any;
+            }
+            duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string);
+
+            let time_to_play: number;
+            const threshold = .2 * 1000;
+
+            // request music list
+
+            if (result?.song_list.length === 0) {
+              time_to_play = Date.now();
+            } else {
+              time_to_play = result?.song_list[result?.song_list.length - 1].time_to_play + ((result?.song_list[result?.song_list.length - 1].duration + .5) * threshold);
+            }
+            const updatedSongList = filterMusicPlaylist(result?.song_list);
+
+            const musicToRequest = {
+              song_url: song,
+              time_to_play,
+              duration
+            };
+
+            collection.updateOne({users: socket.userId}, {$set: { song_list: [...updatedSongList, musicToRequest] }}, (err) => {
+              assert.equal(null, err);
+              const new_array = [...updatedSongList, musicToRequest]
+              console.log(`${socket.userId} requested song successfully => ${new_array[new_array.length-1].song_url} at room ${result.room_id}`);
+
+              io.in(result.room_id).emit('song-queue', new_array);
+            })
+          }
+        });
+      });
     });
   }
 }

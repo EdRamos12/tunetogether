@@ -20,12 +20,11 @@ export function authMiddlewareExpress (req: NextApiRequestLoggedIn, res: NextApi
   const token = req.cookies.__bruh;
   if (!token) return res.status(401).send({error: true, message: "Token não disponibilizado"});
 
-  const decoded = verify(token, String(process.env.JWT_SECRET)) as decodedJWT;
-
   try {
+    const decoded = verify(token, String(process.env.JWT_SECRET)) as decodedJWT;
     req.userId = decoded?.username || decoded?.userId;
   } catch (err) {
-    return res.status(401).send({ err }); 
+    return res.status(401).send({ error: true, message: 'Token has expired' }); 
   } finally {
     return next();
   }
@@ -45,7 +44,7 @@ export function authMiddlewareSocketIO (socket: any, next: (err?: ExtendedError 
     if (error) {
       return next(error);
     }
-    console.log(decoded);
+    //console.log(decoded);
     const { userId, username } = decoded as decodedJWT;
     socket.userId = username || userId;
     
