@@ -7,6 +7,7 @@ import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon 
 import NavbarButton from '../components/NavbarButton';
 import ChatMessage from '../components/ChatMessage';
 import { SocketContext } from '../context/SocketContext';
+import PlayerComponent from '../components/PlayerComponent';
 
 const formatMessage = (str: string) => {
   const formattedString = str.replace(/\s{2,}/g, ' ').trim();
@@ -22,7 +23,6 @@ const Home: NextPage = () => {
   const [room, setRoom] = useState('');
   const [url, setUrl] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
-
 
   // checks to see if socket successfully connected to server
   useEffect(() => {
@@ -52,7 +52,7 @@ const Home: NextPage = () => {
   }
 
   // now this is fun
-  // once 
+  // checks if room code is the correct length, then just emits join to the back-end to that room
   const handleRoomConnection = () => {
     const correctedRoomCode = room.split(" ").join("").trim();
     //console.log(correctedRoomCode.length >= 5, room.length);
@@ -152,6 +152,8 @@ const Home: NextPage = () => {
 
         <input type="button" value={`request song`} onClick={handleSongRequest} />
       </div>
+
+      <PlayerComponent />
       
     </div>
   )

@@ -13,8 +13,7 @@ import cookieParser from 'cookie-parser';
 import { authMiddlewareSocketIO } from '../utils/authMiddleware';
 import { errors } from 'celebrate';
 import client from '../utils/client';
-
-const ROOM_LENGTH = parseInt(process.env.ROOM_LENGTH as string);
+import RoomLength from '../utils/types/RoomLength';
 
 const roomController = new RoomController();
 const musicQueueController = new MusicQueueController();
@@ -27,20 +26,22 @@ const handle = app.getRequestHandler();
 
 let io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
 
-const deleteRoom = (room: string) => {
-  client.db(process.env.DB_NAME).collection("rooms").deleteOne({ room_id: room }, function(err) {
-    if (err) throw err;
+const deleteRoom = async (room: string) => {
+  try {
+    await client.db(process.env.DB_NAME).collection("rooms").deleteOne({ room_id: room });  
     console.log(`IO Room ${room} has been deleted`);
-    //client.close() study this later
-  });
+  } catch (err) {
+    if (err) throw err;
+  }
 }
 
-const deleteAllRooms = () => {
-  client.db(process.env.DB_NAME).collection("rooms").deleteMany({}, function(err) {
-    if (err) throw err;
+const deleteAllRooms = async () => {
+  try {
+    await client.db(process.env.DB_NAME).collection("rooms").deleteMany({}); 
     console.log(`All rooms been reset! (server start)`);
-    //client.close() study this later
-  });
+  } catch (err) {
+    if (err) throw err;
+  }
 }
 
 app.prepare().then(() => {
@@ -65,13 +66,13 @@ app.prepare().then(() => {
 
   // room created, happens when someone tries to join a room for the first time
   io.of('/').adapter.on('create-room', (room) => { 
-    if (room.length > ROOM_LENGTH) return;
+    if (room.length > RoomLength) return;
     console.log(`IO Room ${room} has been created`);
   });
 
   // room deleted, happens when no one is at the room anymore
   io.of('/').adapter.on('delete-room', (room) => { 
-    if (room.length > ROOM_LENGTH) return;
+    if (room.length > RoomLength) return;
 
     deleteRoom(room);
   });

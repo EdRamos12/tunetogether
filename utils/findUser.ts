@@ -8,12 +8,7 @@ export interface userInterfaceDB {
   username: string;
 }
 
-interface findUserCallbackInterface {(
-  err: Error, 
-  user: userInterfaceDB | null
-): void | null | any}
-
-export default async function findUser(client: MongoClient, dbName: string, email: string, callback: findUserCallbackInterface) {
+export default async function findUser(client: MongoClient, dbName: string, email: string) {
   const collection = client.db(dbName).collection("user");
-  collection.findOne({ email }, callback as any);
+  return await collection.findOne({ email });
 }
