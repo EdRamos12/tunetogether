@@ -10,15 +10,33 @@ interface WindowWithYTApi extends Window {
 const PlayerComponent = () => {
   const socket = useContext(SocketContext);
   const [songList, setSongList] = useState<Array<SongDocument>>([]);
+  const songListRef = useRef(songList);
+
   const [currentSong, setCurrentSong] = useState<{ url?: string, platform?: string, time_to_play?: number, id?: string }>({});
-  let lastTimeSynced = Date.now();
+  const [lastTimeSynced, setLastTimeSynced] = useState<{ last_time?: number, last_time_video?: number }>({});
+  let lastTimeSyncedRef = useRef(lastTimeSynced);
 
   const youtubeIframe = useRef<HTMLIFrameElement>(null);
-  let ytPlayer: YT.Player | undefined;
+  const [ytPlayer, setYrPlayer] = useState<YT.Player | undefined>(undefined);
 
   const getCurrentSongList = async () => {
-    const response = await axiosInstance.get('/get-songs');
-    setSongList(response.data.song_list);
+    try {
+      const response = await axiosInstance.get('/get-songs');
+      setSongList(response.data.song_list);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const getYoutubeVideoId = (song_url: string) => {
+    if (song_url.includes('youtube')) {
+      const url = new URL(song_url);
+      const params = new URLSearchParams(url.searchParams);
+      return params.get('v') as string
+    } else {
+      const url = new URL(song_url);
+      return url.pathname.replace('/', '') as string;
+    }
   }
 
   async function syncCurrentTime() {
@@ -26,27 +44,20 @@ const PlayerComponent = () => {
     const current_time = await axiosInstance.get('/sync');
     const latency = Date.now() - start_time;
 
-    lastTimeSynced = Date.now();
+    setLastTimeSynced({
+      last_time: Date.now(),
+      last_time_video: (current_time.data.current_server_time + latency - current_time.data.current_song.time_to_play) / 1000
+    });
 
     const current_song = current_time.data.current_song.song_url as string;
-    if (current_song.includes('youtube')) {
-      const url = new URL(current_song);
-      const params = new URLSearchParams(url.searchParams);
-      setCurrentSong({ 
-        id: current_time.data.current_song.id,
-        url: params.get('v') as string, 
-        platform: 'yt', 
-        time_to_play: (current_time.data.current_server_time + latency - current_time.data.current_song.time_to_play) / 1000 
-      });
-    } else {
-      const url = new URL(current_song);
-      setCurrentSong({ 
-        id: current_time.data.current_song.id,
-        url: url.pathname.replace('/', ''), 
-        platform: 'yt', 
-        time_to_play: (current_time.data.current_server_time + latency - current_time.data.current_song.time_to_play) / 1000 
-      });
-    }
+
+    setCurrentSong({ 
+      id: current_time.data.current_song.id,
+      url: getYoutubeVideoId(current_song), 
+      platform: 'yt', 
+      time_to_play: current_time.data.current_song.time_to_play, 
+    });
+
     return current_time;
   }
 
@@ -64,81 +75,126 @@ const PlayerComponent = () => {
   useEffect(() => {
     if (songList.length === 0) return;
 
+    songListRef.current = songList;
+
     syncCurrentTime();
   }, [songList]);
 
   useEffect(() => {
+    lastTimeSyncedRef.current = lastTimeSynced;
+  }, [lastTimeSynced]);
+
+  useEffect(() => {
     if (Object.keys(currentSong).length === 0) return;
 
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    if (!ytPlayer) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
-    const onYTPlayerPause = (event: YT.OnStateChangeEvent) => {
-      console.log(event.data === (window as unknown as WindowWithYTApi).YT.PlayerState.ENDED);
+      const onPlayerPause = (event: YT.OnStateChangeEvent) => {
+        const currentLastTimeSynced = lastTimeSyncedRef.current;
+        const tolerance_in_seconds = 1.5
+        const difference_when_last_synced_locally_using_date_now = Date.now() - (currentLastTimeSynced?.last_time || 0);
+        const difference_when_last_synced_locally_using_video_time = event.target.getCurrentTime() - (currentLastTimeSynced?.last_time_video || 0);
 
-      switch (event.data) {
-        case (window as unknown as WindowWithYTApi).YT.PlayerState.UNSTARTED:
-          ytPlayer?.playVideo();
-          break;
-        case (window as unknown as WindowWithYTApi).YT.PlayerState.PAUSED:
-          lastTimeSynced = Date.now();
-          ytPlayer?.playVideo();
-          break;
-        case (window as unknown as WindowWithYTApi).YT.PlayerState.PLAYING:
-          if ((Date.now() - lastTimeSynced) / 1000 < 2.5) break; 
+        const previous_time_stamp = (currentLastTimeSynced.last_time_video!) + ((Date.now() - (currentLastTimeSynced.last_time || 0)) / 1000);
+        const difference_in_seconds = previous_time_stamp - event.target.getCurrentTime();
 
-          lastTimeSynced = Date.now();
-          ytPlayer?.seekTo(parseInt((currentSong.time_to_play as any + ((Date.now() - lastTimeSynced) / 1000))), true);
-          break;
-        case (window as unknown as WindowWithYTApi).YT.PlayerState.ENDED:
-          const index_from_current_song = songList.findIndex(item => item.id === currentSong.id);
+        const new_time = Math.floor(event.target.getCurrentTime() + difference_in_seconds);
 
-          if (index_from_current_song === -1 && songList.length > 0) {
-            syncCurrentTime();
-            console.log('hello how are you')
+        const resyncVideoLocally = () => {
+          event.target.seekTo(new_time, true);
+          setLastTimeSynced({
+            last_time: Date.now(),
+            last_time_video: new_time,
+          });
+          lastTimeSyncedRef.current = {
+            last_time: Date.now(),
+            last_time_video: new_time,
+          };
+        }
+
+        switch (event.data) {
+          case (window as unknown as WindowWithYTApi).YT.PlayerState.UNSTARTED:
+            event.target.playVideo();
             break;
-          } 
-          
-          if (index_from_current_song === songList.length - 1) break;
+          case (window as unknown as WindowWithYTApi).YT.PlayerState.PAUSED:
+            event.target.playVideo();
+          case (window as unknown as WindowWithYTApi).YT.PlayerState.PLAYING:
+            if (difference_when_last_synced_locally_using_date_now / 1000 < tolerance_in_seconds) break; 
+  
+            if (difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time < 1.5 && difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time > -1.5) break;
+  
+            // debug for real-time sync
+  
+            // console.log(`last time it was at: ${Math.floor(previous_time_stamp / 60)}:${String(Math.floor(previous_time_stamp - Math.floor(previous_time_stamp / 60) * 60)).padStart(2, '0')}`)
+            // console.log(`currently on: ${Math.floor(event.target.getCurrentTime() / 60)}:${String(Math.floor(event.target.getCurrentTime() - Math.floor(event.target.getCurrentTime() / 60) * 60)).padStart(2, '0')}`);
+            // console.log(`difference is about: ${Math.floor(difference_in_seconds / 60)}:${String(Math.floor(difference_in_seconds - Math.floor(difference_in_seconds / 60) * 60)).padStart(2, '0')}`);
+            // console.log(`it should be at: ${Math.floor(new_time / 60)}:${String(Math.floor(new_time - Math.floor(new_time / 60) * 60)).padStart(2, '0')}`);
+  
+            resyncVideoLocally();
+            break;
+          case (window as unknown as WindowWithYTApi).YT.PlayerState.ENDED:
+  
+            if (difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time > 1.5 || difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time < -1.5 || difference_when_last_synced_locally_using_date_now / 1000 > tolerance_in_seconds) {
+              resyncVideoLocally(); 
+              break;
+            }           
 
-          ytPlayer?.loadVideoById(songList[index_from_current_song + 1].song_url);
-          console.log('ALOOO? ', songList);
-          break;
+            const current_song_list = songListRef.current;
+            const current_song = current_song_list.find(item => item.id === currentSong.id);
+            const index_from_current_song = current_song_list.findIndex(item => item.id === currentSong.id);
+  
+            if (index_from_current_song === -1 && current_song_list.length > 0) {
+              syncCurrentTime();
+              break;
+            } 
+            
+            if (current_song === current_song_list[current_song_list.length - 1]) break;
+  
+            event.target.loadVideoById(getYoutubeVideoId(current_song_list[index_from_current_song + 1].song_url));
+            break;
+        }
       }
+  
+      const onPlayerReady = (event: YT.PlayerEvent) => {
+        event.target.seekTo(lastTimeSyncedRef.current.last_time_video as number, true);
+        event.target.playVideo();
+      };
+  
+      const onPlayerPlaybackRateChange = (event: YT.PlayerEvent) => {
+        event.target.setPlaybackRate(1);
+      }
+
+      console.log('PLEASE');
+  
+      const youtubeIframeSetup = () => {
+        //                          \/\/\/ ------ i hate typescript sometimes (only sometimes)
+        setYrPlayer(new (window as unknown as WindowWithYTApi).YT.Player(youtubeIframe.current, { 
+          videoId: currentSong.url,
+          playerVars: {
+            autoplay: 1,
+          },
+          events: {
+            onStateChange: onPlayerPause,
+            onReady: onPlayerReady,
+            onPlaybackRateChange: onPlayerPlaybackRateChange,
+            onError: (err: any) => console.log(err)
+          },
+        }));
+      };
+  
+      (window as any).onYouTubeIframeAPIReady = youtubeIframeSetup;
+  
+      return () => {
+        delete (window as any).onYouTubeIframeAPIReady;
+      };
+    } else {
+      ytPlayer.loadVideoById(currentSong.url as string);
     }
-
-    const onPlayerReady = (event: YT.PlayerEvent) => {
-      //console.log(currentSong.time_to_play as number)
-      //console.log(currentSong?.time_to_play as number / 60)
-      ytPlayer?.seekTo(parseInt(currentSong.time_to_play as any), true);
-      event.target.playVideo();
-    };
-
-    const youtubeIframeSetup = () => {
-      //                          \/\/\/ ------ i hate typescript sometimes (only sometimes)
-      ytPlayer = new (window as unknown as WindowWithYTApi).YT.Player(youtubeIframe.current, { 
-        videoId: currentSong.url,
-        playerVars: {
-          autoplay: 1,
-        },
-        events: {
-          onStateChange: onYTPlayerPause,
-          onReady: onPlayerReady,
-          onError: (err: any) => console.log(err)
-        },
-      });
-    };
-
-    // cria o player de vídeo quando a API do YouTube estiver pronta
-    (window as any).onYouTubeIframeAPIReady = youtubeIframeSetup;
-
-    // remove o event listener quando o componente for desmontado
-    return () => {
-      delete (window as any).onYouTubeIframeAPIReady;
-    };
-  }, [currentSong])
+  }, [currentSong]);
 
   return <div>
     {currentSong?.platform === 'yt' && (
