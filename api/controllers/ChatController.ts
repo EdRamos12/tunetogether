@@ -1,8 +1,9 @@
 import { Server } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
+import ServerSocket from "../../utils/types/ServerSocketUserId";
 
 export default class ChatController {
-  setChatController(socket: any, io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>) {
+  respond(socket: ServerSocket, io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>) {
     socket.on('send-message', (data: {message: string, room: string}) => {
       const {message, room} = data;
       // server checks to see if socket is sending message to another room, other than theirs

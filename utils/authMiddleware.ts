@@ -3,6 +3,7 @@ import { verify } from "jsonwebtoken";
 import { NextApiRequest, NextApiResponse } from "next/types";
 import { ExtendedError } from "socket.io/dist/namespace";
 import cookie from "cookie";
+import ServerSocket from "./types/ServerSocketUserId";
 
 interface decodedJWT {
   userId: string
@@ -30,13 +31,14 @@ export function authMiddlewareExpress (req: NextApiRequestLoggedIn, res: NextApi
   }
 }
 
-export function authMiddlewareSocketIO (socket: any, next: (err?: ExtendedError | undefined) => void) {
+export function authMiddlewareSocketIO (socket: ServerSocket, next: (err?: ExtendedError | undefined) => void) {
   const header = cookie.parse(socket.handshake.headers.cookie as string);
   const token = header.__bruh;
   if (!token) {
     const err = new Error("not authorized");
     err.message = "Please login before using sockets";
     console.error('authentication failed from: ' + socket.id);
+    socket.disconnect();
     return next(err);
   }
 

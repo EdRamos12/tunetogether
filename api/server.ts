@@ -4,7 +4,6 @@ import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import routes from './routes';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import RoomController from './controllers/RoomController';
 import MusicQueueController from './controllers/MusicQueueController';
 import ChatController from './controllers/ChatController';
@@ -14,17 +13,18 @@ import { authMiddlewareSocketIO } from '../utils/authMiddleware';
 import { errors } from 'celebrate';
 import client from '../utils/client';
 import RoomLength from '../utils/types/RoomLength';
+import ServerSocket from '../utils/types/ServerSocketUserId';
 
-const roomController = new RoomController();
-const musicQueueController = new MusicQueueController();
-const chatController = new ChatController();
+const room_controller = new RoomController();
+const music_queue_controller = new MusicQueueController();
+const chat_controller = new ChatController();
 
 const port = parseInt(process.env.PORT || '3000', 10);
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-let io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
+let io: Server;
 
 const deleteRoom = async (room: string) => {
   try {
@@ -77,17 +77,43 @@ app.prepare().then(() => {
     deleteRoom(room);
   });
 
-  io.on('connection', (socket: any) => {
+  io.on('connection', async (socket: ServerSocket) => {
     console.log(`Client connected => ${socket.userId} ${socket.id}`);
 
-    roomController.setIORoomController(socket);
+    await client.connect();
 
-    musicQueueController.setIORequestController(socket);
+    const collection = client.db(process.env.DB_NAME as string).collection('rooms');
 
-    chatController.setChatController(socket, io);
+    const user_room = await collection.findOne({ users: socket.userId }); 
 
-    socket.on('disconnect' , () => {
+    if (user_room) {
+      socket.join(user_room.room_id);
+      socket.to(socket.id).emit('room-status', {
+        current_room: user_room.room_id
+      });
+    }
+
+    await client.close();
+
+    // set controllers
+    room_controller.respond(socket);
+    music_queue_controller.respond(socket);
+    chat_controller.respond(socket, io);
+
+    socket.on('disconnect' , async () => {
       console.log(`Client disconnected => ${socket.userId}`);
+
+      await client.connect();
+
+      const collection = client.db(process.env.DB_NAME as string).collection('rooms');
+
+      try {
+        await collection.updateOne({ users: { $in: [socket.userId] } }, { $pull: { users: socket.userId } });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        await client.close();
+      }
     })
   });
 
@@ -99,7 +125,6 @@ app.prepare().then(() => {
 
   httpServer.listen(port, () => {
     deleteAllRooms();
-
     console.log(`> Server listening at http://localhost:${port} as ${dev ? 'development' : process.env.NODE_ENV}`);
   });
 });

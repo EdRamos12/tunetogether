@@ -8,6 +8,7 @@ import { io } from "../server";
 import SongDocument from '../../utils/types/SongDocument';
 import RoomLength from '../../utils/types/RoomLength';
 import { v4 } from 'uuid';
+import ServerSocket from '../../utils/types/ServerSocketUserId';
 
 const youtubeDurationToSeconds = (duration: string) => { // returns everything into seconds
   const tempArray = duration.replace('PT', '').split('M');
@@ -79,9 +80,9 @@ export default class MusicQueueController {
     return rsp.status(200).json({ current_server_time: Date.now(), current_song: musics.find((item: SongDocument) => item.time_to_play === getCurrentSongTime(musics)) });
   }
 
-  setIORequestController(socket: any) {
+  respond(socket: ServerSocket) {
     socket.on('request-song', async (song: string) => {
-      if (socket.rooms >= 3) {
+      if (Array.from(socket.rooms).length >= 3) {
         socket.emit('request-song-status', 'You are on two rooms! Leave one so you can submit to a proper room!');
       }
 
