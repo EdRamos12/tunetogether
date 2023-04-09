@@ -10,11 +10,11 @@ The app was made to connect you and your friends, into listening podcasts, video
 Check the list for more details about the project.
 
 - [x] Sign in/Log in system (back-end)
-- [ ] Make website layout
-- [ ] Request song/video feature
+- [x] Request song/video feature
+- [x] Make a functional chat
+- [x] Sync time with everyone that enters the room
+- [ ] (re)Make website layout
 - [ ] Make an actual functional online playlist
-- [ ] Sync time with everyone that enters the room
-- [ ] Make a functional chat
 - [ ] Skip song/video (owner permissions/vote system)
 - [ ] Add ratio system (like/dislikes)
 - [ ] Make rooms (private/public) with sharable code
