@@ -36,8 +36,8 @@ function validateEmail(email: string) {
 export default class UserController {
   async login(req: NextApiRequest, res: NextApiResponse) {
     try {
-      assert.notEqual(null, req.body.email, "Precisa colocar e-mail!");
-      assert.notEqual(null, req.body.password, "Precisa colocar uma senha!");
+      assert.notEqual(null, req.body.email, "You need to put a valid e-mail!");
+      assert.notEqual(null, req.body.password, "You need to put a password!");
   
       await client.connect();
 
@@ -48,16 +48,16 @@ export default class UserController {
 
         if (!user || user == null) {
           await client.close();
-          return res.status(401).json({ error: true, message: "E-mail/Senha Incorreto" });
+          return res.status(401).json({ error: true, message: "Incorrect e-mail/password! Try again!" }); // e-mail wrong
         }
 
         authUser(password, user.password, async (err: Error, resp: any) => {
           if (err) return res.status(500).json({ error: true, message: "Erro no sistema: "+err.message });
-          if (!resp) return res.status(401).json({ error: true, message: "E-mail/Senha Incorreto" }); // senha incorreta
+          if (!resp) return res.status(401).json({ error: true, message: "Incorrect e-mail/password! Try again!" }); // incorrect password
 
           const token = sign({
-            userId: user!.userId,
-            username: user!.username,
+            userId: user?.userId,
+            username: user?.username,
             email,
           }, process.env.JWT_SECRET as string, {
               expiresIn: 10800,
@@ -69,10 +69,8 @@ export default class UserController {
         });
       } catch (err) {
         await client.close();
-        return res.status(500).json({ error: true, message: "Erro ao achar usuário: " + err });
+        return res.status(500).json({ error: true, message: "Error while fetching user: " + err });
       }
-
-      
     } catch (bodyError: AssertionError | any) {
       await client.close();
       return res.status(403).json({ error: true, message: bodyError.message });
@@ -125,17 +123,17 @@ export default class UserController {
                 return res.status(201).json(creationResult);
               } else {
                 client.close();
-                return res.status(500).json({ error: true, message: "Erro ao criar usuario, ve os logs irmao: "+creationResult });
+                return res.status(500).json({ error: true, message: "Error while creating user, check logs: "+creationResult });
               }
             }
           );
         } else {
           // if user exists, return with error
-          client.close();
-          return res.status(403).json({ error: true, message: "Email ja existe." });
+          await client.close();
+          return res.status(403).json({ error: true, message: "E-mail already exists, try a different one!" });
         } 
       } catch (err) {
-        return res.status(500).json({ error: true, message: "Erro ao achar usuário: "+err });;
+        return res.status(500).json({ error: true, message: "Error while fetching user: "+err });;
       }
   }
 
