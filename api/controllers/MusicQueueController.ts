@@ -15,7 +15,7 @@ const youtubeDurationToSeconds = (duration: string) => { // returns everything i
   const seconds = Number(tempArray[tempArray.length - 1].replace('S', ''));
 
   if (tempArray[0].includes('H')) { // returns with hours, minutes and seconds
-    const divideHoursAndMinutes = tempArray[0].split('H');
+    const divideHoursAndMinutes = tempArray[0].split('H'); // 0 = hours || 1 = minutes
     const hours = Number(divideHoursAndMinutes[0]);
     const minutes = Number(divideHoursAndMinutes[1]);
 
@@ -101,17 +101,17 @@ export default class MusicQueueController {
         } else {
           ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${options.query.v}&part=contentDetails&key=${process.env.YOUTUBE_API_KEY}`) as any;
         }
-        duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string);
+        duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string) * 1000;
 
         let time_to_play: number;
-        const threshold = .2 * 1000;
+        const threshold = .05 * 1000;
 
         // request music list
 
         if (result?.song_list.length === 0) {
           time_to_play = Date.now();
         } else {
-          time_to_play = result?.song_list[result?.song_list.length - 1].time_to_play + ((result?.song_list[result?.song_list.length - 1].duration + .5) * threshold);
+          time_to_play = result?.song_list[result?.song_list.length - 1].time_to_play + (result?.song_list[result?.song_list.length - 1].duration * threshold);
         }
         const updatedSongList = filterMusicPlaylist(result?.song_list);
 
