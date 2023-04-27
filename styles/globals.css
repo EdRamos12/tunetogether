@@ -1,17 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;900&display=swap');
+
 :root {
-  --black: #191A19;
+  --black: #090110;
   --black-green: #151c15;
   --dark-green: #1E5128;
   --green: #4E9F3D;
   --bluey-green: #1c392c;
   --light-green: #D8E9A8;
+
+  --purple-links: #8125AB;
+  --button-main-bg: #2E0D3D;
+  --button-disabled-bg: #342E37;
+  --button-hover-bg: #782A9b;
 }
 
 html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+}
+
+html, body, button {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
 

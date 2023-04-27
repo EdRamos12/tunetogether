@@ -8,28 +8,19 @@
   font-size: 21px;
 }
 
-
-.loginInput {
-  color: black;
-  padding: 15px;
-  max-width: 100%;
-  border-radius: 6px;
-  border: none;
-  transition: .1s;
-  font-size: 16px;
-  width: 300px;
-}
-
-.container svg {
-  margin-top: -100px;
-  max-width: 100%;
+.authBg {
+  width: 100vw;
+  height: 100vh;
+  background: url('/static/login_bg.jpg');
+  opacity: 0.3;
+  filter: blur(25px);
+  position: absolute;
 }
 
 .mainContainer {
-  display: grid;
-  grid-template-columns: auto auto;
-  padding: 2vh 5vh;
-  background: var(--green);
+  display: flex;
+  justify-content: center;
+  align-items: center;
   flex: 1 1 auto;
 }
 
@@ -40,64 +31,112 @@
 .loginHandler {
   display: flex;
   flex-direction: column;
-  margin-top: -22vh;
-}
-
-.loginHandler, .illustrationContainer {
+  background: linear-gradient(180deg, #2E0D3D 0%, #090110 39.58%);
+  border-radius: 50px;
+  max-width: 500px;
+  z-index: 10;
   flex: 1 1 auto;
   justify-content: center;
   align-items: center;
   width: 100%;
+  padding: 30px 60px;
 }
 
-.inputContainer label {
-  height: 0;
-  position: relative;
-  top: 10px;
-  left: 16px;
-  color: #0000006e;
-  pointer-events: none;
-  transition: .1s;
+.loginHandler h1 {
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
-.inputContainer label.active {
-  top: 4px;
-  left: 10px;
-  font-size: 15px;
+.loginHandler h3 {
+  font-weight: 500;
+  margin-top: 10px;
 }
 
-.inputContainer label.active + .loginInput {
-  padding-top: 20px;
+.loginHandler a {
+  color: var(--purple-links);
+  font-weight: 400;
+  margin-top: 16px;
 }
 
 .loginHandler button {
   padding: 10px 20px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 18px;
   color: white;
-  background: var(--bluey-green);
+  background: var(--button-main-bg);
   margin-top: 20px;
   font-size: 20px;
-  transition: .25s
+  transition: .25s;
+  width: 100%;
+}
+
+.loginHandler span {
+  color: var(--purple-links);
 }
 
 .loginHandler button:disabled, .loginHandler button:disabled:hover {
   cursor: default;
-  background: #84d59c;
+  background: var(--button-disabled-bg);
   color: #ffffff8f;
 }
 
 .loginHandler button:hover {
-  background: var(--dark-green);
+  background: var(--button-hover-bg);
 }
 
-.inputContainer {
-  margin: 10px 0;
+.loginButton {
+  margin-bottom: 20px;
+  padding: 15px 0 !important;
+}
+
+.otherOptionsTitle {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  font-weight: 600;
+}
+
+.otherOptionsTitle span {
+  display: block;
+  width: 50%;
+  text-align: center;
+  color: #2E0D3D
+}
+
+.otherOptionsTitle div {
+  width: 30%;
+  background: #2E0D3D;
+  padding: 1px 0;
+  margin: 0 5px;
+}
+
+.otherOptionsContainer {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.otherOptionsContainer button {
+  width: 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconMargin {
+  margin-right: 10px;
 }
 
 @media (max-width: 700px) {
   .mainContainer {
     display: flex;
     flex-direction: column;
+  }
+
+  .loginHandler {
+    border-radius: 0;
+    max-width: 100%;
   }
 }
