@@ -62,7 +62,7 @@ export default class UserController {
           }, process.env.JWT_SECRET as string, {
               expiresIn: 10800,
           });
-          setCookie(res, "__bruh", token, cookieOptions);
+          setCookie(res, "__secret_token", token, cookieOptions);
           const { password, ...exceptPassword } = user;
           await client.close();
           return res.status(200).json(exceptPassword);
@@ -118,7 +118,7 @@ export default class UserController {
                 }, process.env.JWT_SECRET as string, {
                     expiresIn: 10800,
                 });
-                setCookie(res, "__bruh", token, cookieOptions);
+                setCookie(res, "__secret_token", token, cookieOptions);
                 client.close();
                 return res.status(201).json(creationResult);
               } else {
@@ -137,8 +137,39 @@ export default class UserController {
       }
   }
 
+  async auth(_: NextApiRequest, res: NextApiResponse) { 
+    // this function is going to use the middleware to check things :P
+    // don't know if i update the user's token, for now it's a TODO
+    
+    return res.status(200).json({ message: 'Ok!' });
+  }
+
+  async check_username_availability(req: NextApiRequest, res: NextApiResponse) {
+    try {
+      const USERNAME_MINIMUM_LENGTH = 3;
+
+      const { username } = req.query;
+
+      if (!username) throw { message: 'You need to put a valid username!', code: 404 };
+      
+      if (username.length < USERNAME_MINIMUM_LENGTH) throw { message: `Username length should be at least ${USERNAME_MINIMUM_LENGTH}!`, code: 406 };
+        
+      await client.connect();
+
+      const collection = client.db(process.env.DB_NAME as string).collection("user");
+
+      const username_found = await collection.findOne({ username });
+
+      if (username_found) throw { message: 'Username already in use!', code: 409 };
+
+      return res.status(200).json({ message: 'Username available!' });
+    } catch (err: any) {
+      return res.status(err.code || 500).json({ message: err.message || err });
+    }
+  }
+
   logout(_: NextApiRequest, res: NextApiResponse) {
-    setCookie(res, "__bruh", "", cookieOptions);
+    setCookie(res, "__secret_token", "", cookieOptions);
     return res.status(200);
   }
 }

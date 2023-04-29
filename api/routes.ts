@@ -11,6 +11,8 @@ const userController = new UserController();
 routes.get('/get-songs', authMiddlewareExpress as any, musicQueueController.get as any);
 routes.get('/sync', authMiddlewareExpress as any, musicQueueController.sync as any);
 
+routes.get('/verify-auth', authMiddlewareExpress as any, userController.auth as any);
+
 routes.post('/sign-up', celebrate({
   [Segments.BODY]: Joi.object().keys({
     email: Joi.string().email().required(),
@@ -26,5 +28,7 @@ routes.post('/login', celebrate({
     password: Joi.string().required().error(new Error('Please provide a password!')),
   }),
 }), userController.login as any);
+
+routes.get('/username', userController.check_username_availability as any);
 
 export default routes;

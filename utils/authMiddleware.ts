@@ -18,8 +18,8 @@ export interface NextApiRequestLoggedIn extends NextApiRequest {
 }
 
 export function authMiddlewareExpress (req: NextApiRequestLoggedIn, res: NextApiResponse, next: NextFunction) {
-  const token = req.cookies.__bruh;
-  if (!token) return res.status(401).send({error: true, message: "Token não disponibilizado"});
+  const token = req.cookies.__secret_token;
+  if (!token) return res.status(401).send({error: true, message: "Token not available"});
 
   try {
     const decoded = verify(token, String(process.env.JWT_SECRET)) as decodedJWT;
@@ -33,7 +33,7 @@ export function authMiddlewareExpress (req: NextApiRequestLoggedIn, res: NextApi
 
 export function authMiddlewareSocketIO (socket: ServerSocket, next: (err?: ExtendedError | undefined) => void) {
   const header = cookie.parse(socket.handshake.headers.cookie as string);
-  const token = header.__bruh;
+  const token = header.__secret_token;
   if (!token) {
     const err = new Error("not authorized");
     err.message = "Please login before using sockets";
