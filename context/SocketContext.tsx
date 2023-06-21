@@ -3,7 +3,7 @@ import io, { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 // autoConnect set to false, otherwise multiple sockets will run per client (spoiler: which is not optimal)
-let socket = io('http://localhost:3000', {autoConnect: false});
+let socket = io(':3000', {autoConnect: false});
 const SocketContext = React.createContext({} as Socket<DefaultEventsMap, DefaultEventsMap>);
 
 const SocketProvider = ({ children }: { children: React.ReactNode }) => {

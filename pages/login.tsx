@@ -18,7 +18,7 @@ const Login: NextPage = () => {
     e.preventDefault();
 
     setFetching(true);
-    axios.post('http://localhost:3000/io/login', {email, password}).then(() => {
+    axios.post('/io/login', {email, password}).then(() => {
       Router.push('/');
     }).catch((err) => {
       setFetching(false);
