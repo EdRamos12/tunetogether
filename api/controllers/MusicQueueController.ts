@@ -111,7 +111,7 @@ export default class MusicQueueController {
         if (result?.song_list.length === 0) {
           time_to_play = Date.now();
         } else {
-          time_to_play = result?.song_list[result?.song_list.length - 1].time_to_play + (result?.song_list[result?.song_list.length - 1].duration * threshold);
+          time_to_play = result?.song_list[result?.song_list.length - 1].time_to_play + (result?.song_list[result?.song_list.length - 1].duration + threshold);
         }
         const updatedSongList = filterMusicPlaylist(result?.song_list);
 
@@ -127,10 +127,9 @@ export default class MusicQueueController {
         await collection.updateOne({users: socket.userId}, {$set: { song_list: [...updatedSongList, musicToRequest] }});
 
         const new_array = [...updatedSongList, musicToRequest]
-        console.log(`${socket.userId} requested song successfully => ${new_array[new_array.length-1].song_url} at room ${result?.room_id}`);
+        // debug
+        //console.log(`${socket.userId} requested song successfully => ${new_array[new_array.length-1].song_url} at room ${result?.room_id}`);
         io.in(result?.room_id).emit('song-queue', new_array);
-
-         
       }
     });
   }

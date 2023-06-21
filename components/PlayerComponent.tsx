@@ -8,7 +8,7 @@ interface WindowWithYTApi extends Window {
 }
 
 const PlayerComponent = () => {
-  const socket = useContext(SocketContext);
+  const { socket, room } = useContext(SocketContext);
   const [songList, setSongList] = useState<Array<SongDocument>>([]);
   const songListRef = useRef(songList);
 
@@ -48,29 +48,35 @@ const PlayerComponent = () => {
       last_time: Date.now(),
       last_time_video: (current_time.data.current_server_time + latency - current_time.data.current_song.time_to_play) / 1000
     });
+    lastTimeSyncedRef.current = {
+      last_time: Date.now(),
+      last_time_video: (current_time.data.current_server_time + latency - current_time.data.current_song.time_to_play) / 1000
+    }
 
     const current_song = current_time.data.current_song.song_url as string;
 
-    setCurrentSong({ 
-      id: current_time.data.current_song.id,
-      url: getYoutubeVideoId(current_song), 
-      platform: 'yt', 
-      time_to_play: current_time.data.current_song.time_to_play, 
-    });
-
+    if (currentSong.time_to_play !== current_time.data.current_song.time_to_play) {
+      setCurrentSong({ 
+        id: current_time.data.current_song.id,
+        url: getYoutubeVideoId(current_song), 
+        platform: 'yt', 
+        time_to_play: current_time.data.current_song.time_to_play, 
+      });
+    }
     return current_time;
   }
 
   useEffect(() => {
-    if (!socket?.connected) return;
+    if (!socket?.connected || room === '') return;
 
     getCurrentSongList();
+    //console.log(socket);
 
     socket.on('song-queue', (data: Array<SongDocument>) => {
       console.log('list updated: ', data);
       setSongList(data);
     });
-  }, [socket?.connected]);
+  }, [socket?.connected, room]);
 
   useEffect(() => {
     if (songList.length === 0) return;

@@ -16,7 +16,7 @@ const formatMessage = (str: string) => {
 }
 
 const Home: NextPage = () => {
-  const socket = useContext(SocketContext);
+  const {socket, changeRoom} = useContext(SocketContext);
   const [socketConnected, setSocketConnected] = useState(false);
   const [messages, setMessages] = useState([] as any);
   const [message, setMessage] = useState('');
@@ -57,15 +57,14 @@ const Home: NextPage = () => {
     const correctedRoomCode = room.split(" ").join("").trim();
     //console.log(correctedRoomCode.length >= 5, room.length);
     if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
-      socket.emit('join', {room: correctedRoomCode, password: roomPassword}, (err: any) => {
-        if (err) console.log('oh no! anyway...');
+      socket.emit('join', {room: correctedRoomCode, password: roomPassword});
 
-        socket.on('message', (data: any) => {
-          setMessages((messages: any) => [...messages, data]);
-        });
-        return;
+      socket.on('message', (data: any) => {
+        setMessages((messages: any) => [...messages, data]);
       });
-      
+      socket.on('join-status', (data: boolean) => {
+        if (data) changeRoom(correctedRoomCode);
+    })
     } else {
       alert('Room code is less than the accepted!');
     }

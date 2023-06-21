@@ -62,7 +62,7 @@ export default class RoomController {
         socket.emit('server-exception', 'there was an error trying to find that ');
         console.log(err);
       } finally {
-         
+        socket.emit('join-status', true);
       }
     });
     
@@ -74,8 +74,6 @@ export default class RoomController {
       await collection.updateOne({ users: { $in: [socket.userId] } }, { $pull: { users: socket.userId } });
 
       leaveAllRooms(socket);
-
-       
     });
   }
 }
