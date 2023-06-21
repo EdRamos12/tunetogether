@@ -93,7 +93,7 @@ app.prepare().then(() => {
       });
     }
 
-    await client.close();
+     
 
     // set controllers
     room_controller.respond(socket);
@@ -112,7 +112,7 @@ app.prepare().then(() => {
       } catch (err) {
         console.error(err);
       } finally {
-        await client.close();
+         
       }
     })
   });

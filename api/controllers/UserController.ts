@@ -47,7 +47,7 @@ export default class UserController {
         const user = await findUser(client, process.env.DB_NAME as string, email);
 
         if (!user || user == null) {
-          await client.close();
+           
           return res.status(401).json({ error: true, message: "Incorrect e-mail/password! Try again!" }); // e-mail wrong
         }
 
@@ -64,15 +64,15 @@ export default class UserController {
           });
           setCookie(res, "__secret_token", token, cookieOptions);
           const { password, ...exceptPassword } = user;
-          await client.close();
+           
           return res.status(200).json(exceptPassword);
         });
       } catch (err) {
-        await client.close();
+         
         return res.status(500).json({ error: true, message: "Error while fetching user: " + err });
       }
     } catch (bodyError: AssertionError | any) {
-      await client.close();
+       
       return res.status(403).json({ error: true, message: bodyError.message });
     }
   }
@@ -119,17 +119,17 @@ export default class UserController {
                     expiresIn: 10800,
                 });
                 setCookie(res, "__secret_token", token, cookieOptions);
-                client.close();
+                 ;
                 return res.status(201).json(creationResult);
               } else {
-                client.close();
+                 ;
                 return res.status(500).json({ error: true, message: "Error while creating user, check logs: "+creationResult });
               }
             }
           );
         } else {
           // if user exists, return with error
-          await client.close();
+           
           return res.status(403).json({ error: true, message: "E-mail already exists, try a different one!" });
         } 
       } catch (err) {

@@ -61,7 +61,7 @@ export default class MusicQueueController {
 
     if (song_list.length == 0) return rsp.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
 
-    await client.close();
+     
     return rsp.json({ current_server_time: Date.now(), current_song: song_list.find((item: SongDocument) => item.time_to_play === getCurrentSongTime(song_list)), song_list });
   }
 
@@ -76,7 +76,7 @@ export default class MusicQueueController {
 
     if (musics.length == 0) return rsp.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
 
-    await client.close();
+     
     return rsp.status(200).json({ current_server_time: Date.now(), current_song: musics.find((item: SongDocument) => item.time_to_play === getCurrentSongTime(musics)) });
   }
 
@@ -130,7 +130,7 @@ export default class MusicQueueController {
         console.log(`${socket.userId} requested song successfully => ${new_array[new_array.length-1].song_url} at room ${result?.room_id}`);
         io.in(result?.room_id).emit('song-queue', new_array);
 
-        await client.close();
+         
       }
     });
   }

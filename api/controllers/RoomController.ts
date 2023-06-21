@@ -62,7 +62,7 @@ export default class RoomController {
         socket.emit('server-exception', 'there was an error trying to find that ');
         console.log(err);
       } finally {
-        await client.close();
+         
       }
     });
     
@@ -75,7 +75,7 @@ export default class RoomController {
 
       leaveAllRooms(socket);
 
-      await client.close();
+       
     });
   }
 }
