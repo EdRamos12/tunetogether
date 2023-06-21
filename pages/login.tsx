@@ -58,7 +58,7 @@ const Login: NextPage = () => {
               <strong>Sign in</strong>
             </button>
 
-            <span>Don't have an account yet? <Link href="/sign-up"><strong>Sign up</strong></Link></span>
+            <span>Don&apos;t have an account yet? <Link href="/sign-up"><strong>Sign up</strong></Link></span>
 
             <div className={styles.otherOptionsTitle}>
               {/* Bar before */}
