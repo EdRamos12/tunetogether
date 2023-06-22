@@ -70,8 +70,8 @@ const PlayerComponent = () => {
     if (!socket?.connected || room === '') return;
 
     getCurrentSongList();
-    //console.log(socket);
-
+    console.log(socket);
+    
     socket.on('song-queue', (data: Array<SongDocument>) => {
       console.log('list updated: ', data);
       setSongList(data);

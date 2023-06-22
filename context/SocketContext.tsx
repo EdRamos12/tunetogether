@@ -9,9 +9,12 @@ const SocketContext = React.createContext({} as {socket: Socket<DefaultEventsMap
 const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [room, setRoom] = useState('');
 
-  const changeRoom = (room: string) => {
-    console.log('sadhasdijuhsakjdhsad')
-    setRoom(room)
+  function changeRoom (room: string) {
+    const correctedRoomCode = room.split(" ").join("").trim();
+    console.log(5, !/[^a-zA-Z]/.test(correctedRoomCode))
+    if (correctedRoomCode.length >= 5 && !/[^a-zA-Z]/.test(correctedRoomCode)) {
+      setRoom(correctedRoomCode)
+    };
   }
 
   useEffect(() => {

@@ -82,6 +82,7 @@ export default class MusicQueueController {
 
   respond(socket: ServerSocket) {
     socket.on('request-song', async (song: string) => {
+      console.log('YHAUDSJSD')
       if (Array.from(socket.rooms).length >= 3) {
         socket.emit('request-song-status', 'You are on two rooms! Leave one so you can submit to a proper room!');
       }
@@ -104,7 +105,7 @@ export default class MusicQueueController {
         duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string) * 1000;
 
         let time_to_play: number;
-        const threshold = .05 * 1000;
+        const threshold = .01 * 1000;
 
         // request music list
 
@@ -129,7 +130,7 @@ export default class MusicQueueController {
         const new_array = [...updatedSongList, musicToRequest]
         // debug
         //console.log(`${socket.userId} requested song successfully => ${new_array[new_array.length-1].song_url} at room ${result?.room_id}`);
-        io.in(result?.room_id).emit('song-queue', new_array);
+        io.in(current_socket_room as string).emit('song-queue', new_array);
       }
     });
   }
