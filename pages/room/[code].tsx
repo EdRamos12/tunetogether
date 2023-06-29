@@ -26,6 +26,7 @@ const Room: NextPage = () => {
   const [url, setUrl] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
   const [connectedToRoom, setConnectedToRoom] = useState(false);
+  const [codeAvailable, setCodeAvailable] = useState(false);
 
   // checks to see if socket successfully connected to server
   useEffect(() => {
@@ -36,7 +37,6 @@ const Room: NextPage = () => {
     });
 
     socket.on('join-status', (data: boolean) => {
-      console.log('waaaaa')
       setConnectedToRoom(data);
     });
 
@@ -48,8 +48,15 @@ const Room: NextPage = () => {
   useEffect(() => {
     if (!code) return;
 
+    setCodeAvailable(true);
+    //handleRoomConnection();
+  }, [code]);
+
+  useEffect(() => {
+    if (!socketConnected || !codeAvailable) return;
+
     handleRoomConnection();
-  }, [code])
+  }, [socketConnected, codeAvailable]);
 
   // now this is fun
   // checks if room code is the correct length, then just emits join to the back-end to that room
