@@ -1,1 +1,1 @@
-export default parseInt(process.env.ROOM_LENGTH as string);
+export default parseInt(process.env.ROOM_LENGTH as string || '5');

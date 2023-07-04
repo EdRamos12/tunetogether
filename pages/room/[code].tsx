@@ -4,9 +4,6 @@ import Head from 'next/head';
 //import Image from 'next/image';
 import { useContext, useEffect, useState } from 'react';
 import styles from '../../styles/Home.module.css';
-import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon } from '@primer/octicons-react';
-import NavbarButton from '../../components/NavbarButton';
-import ChatMessage from '../../components/ChatMessage';
 import { SocketContext } from '../../context/SocketContext';
 import PlayerComponent from '../../components/PlayerComponent';
 
@@ -103,7 +100,7 @@ const Room: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className={styles.sidebar}>
+      {/* <div className={styles.sidebar}>
         <button className={styles.sidebarButtonTop}>
           <HomeIcon />
         </button>
@@ -126,13 +123,13 @@ const Room: NextPage = () => {
         <button className={styles.sidebarButtonBottom}>
           <PersonIcon />
         </button>
-      </div>
+      </div> */}
 
-      <div className={styles.main}>
+      {/* <div className={styles.main}>
         hi
-      </div>
+      </div> */}
 
-      <div className={styles.chatRoom}>
+      {/* <div className={styles.chatRoom}>
         <div className={styles.MessagesHandler}>
           {messages.length > 0 ? messages.map((msg: any, i: number) => (
             <ChatMessage key={i} user={msg.user as string}>
@@ -144,9 +141,104 @@ const Room: NextPage = () => {
           <textarea onChange={(e) => setMessage(e.target.value)} value={message} onKeyDown={(event) => {if (event.key === 'Enter') {handleSendMessage(); event.preventDefault()}}} rows={3} name="" id="" />
           <button disabled={formatMessage(message) == false ? true : false} onClick={handleSendMessage}>Send</button>
         </div>
+      </div> */}
+
+      <div className={styles.topBar}>
+        <div className={styles.logo}>
+          TuneTogether  
+        </div>  
+
+        <div className={styles.option}>
+          Rooms
+        </div>
+        
+        <div className={styles.option}>
+          Playlists
+        </div>
       </div>
 
-      <div className='socketIODebugMenu'>
+      <div className={styles.main}>
+        <div className={styles.contentContainer}>
+          <div className={styles.player}>
+
+            <PlayerComponent />
+
+            <progress  value="32" max="100">32%</progress>
+
+            <div className={styles.playerButtons}>
+              <button>
+                <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
+                  {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
+                  <path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
+                </svg>
+              </button>
+
+              <div className="requestedBy">
+                <span>Requested By:</span>
+
+                <span>John Doe</span>
+              </div>
+
+              <button>
+                {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
+                <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512">
+                  <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"/>
+                </svg>
+              </button>
+
+              <div className="upvotes">
+                <button>
+                  <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
+                    {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->*/}
+                    <path d="M318 177.5c3.8-8.8 2-19-4.6-26l-136-144C172.9 2.7 166.6 0 160 0s-12.9 2.7-17.4 7.5l-136 144c-6.6 7-8.4 17.2-4.6 26S14.4 192 24 192H96l0 288c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32l0-288h72c9.6 0 18.2-5.7 22-14.5z"/>
+                  </svg>
+                </button>
+
+                <button>
+                  <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
+                    {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->*/}
+                    <path d="M2 334.5c-3.8 8.8-2 19 4.6 26l136 144c4.5 4.8 10.8 7.5 17.4 7.5s12.9-2.7 17.4-7.5l136-144c6.6-7 8.4-17.2 4.6-26s-12.5-14.5-22-14.5l-72 0 0-288c0-17.7-14.3-32-32-32L128 0C110.3 0 96 14.3 96 32l0 288-72 0c-9.6 0-18.2 5.7-22 14.5z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+          <div className={styles.sidebar}>
+            <div className={styles.chatContainer}>
+              <h1>Chat</h1>
+
+              <div className={styles.messagesContainer}>
+
+              </div>
+
+              <div className={styles.chatMessengerHandler}>
+                <textarea onChange={(e) => setMessage(e.target.value)} value={message} onKeyDown={(event) => {if (event.key === 'Enter') {handleSendMessage(); event.preventDefault()}}} rows={3} name="" id="" />
+                <button disabled={formatMessage(message) == false ? true : false} onClick={handleSendMessage}>Send</button>
+              </div>
+              
+            </div>
+
+            <div className={styles.userList}>
+              <h1>Online Users</h1>
+
+              <div className={styles.usersContainer}>
+                <div>
+                  <img src="https://media.discordapp.net/attachments/1124003308248510535/1124491830361325619/Turtle.jpg?width=247&height=247" alt="" />
+
+                  <span>Teste</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.options}>
+              <button>dps mudar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.socketIODebugMenu}>
           {socket.connected && 'connected'}
           {socket.disconnected && 'disconnected'}
 
@@ -154,7 +246,7 @@ const Room: NextPage = () => {
         <input type="button" value={`request song`} onClick={handleSongRequest} />
       </div>
 
-      <PlayerComponent />
+      
       
     </div>
   )

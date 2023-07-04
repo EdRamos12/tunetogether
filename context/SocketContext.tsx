@@ -18,10 +18,6 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   useEffect(() => {
-    console.log(room);
-  }, [room])
-
-  useEffect(() => {
     if (!socket.connected) socket.connect(); // connect to server once context is loaded
     return () => {
       socket.disconnect() // and on unload, it disconnects (on most cases)
