@@ -36,6 +36,23 @@ a {
 
 * {
   box-sizing: border-box;
+  scrollbar-width: auto;
+  scrollbar-color: #2E0D3D #0E0218;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #0E0218;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #2E0D3D;
+  border-radius: 10px;
+  border: 1px solid #0E0218;
 }
 
 button:hover {

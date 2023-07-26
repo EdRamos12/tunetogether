@@ -1,8 +1,14 @@
 .MessageWrapper {
   margin-bottom: .1rem;
   color: white;
-  border-radius: 4px;
-  padding: .1rem 0;
+  /* border-radius: 4px; */
+  padding: .5rem 0;
+  padding-left: 20px;
+  background: none;
+}
+
+.MessageWrapper:hover {
+  background: rgba(255,255,255,.05) !important;
 }
 
 .MessageWrapper:nth-child(1) {
@@ -14,4 +20,5 @@
 }
 
 .Message {
+  word-wrap:break-word;
 }

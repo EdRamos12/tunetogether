@@ -2,13 +2,14 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { SocketContext } from "../context/SocketContext";
 import SongDocument from "../utils/types/SongDocument";
 import axiosInstance from "../utils/axiosInstance";
+import getYoutubeVideoId from "../utils/getYoutubeVideoId";
 
 interface WindowWithYTApi extends Window {
   YT: any
 }
 
 const PlayerComponent = () => {
-  const { socket, room } = useContext(SocketContext);
+  const { socket, room, setCurrentSongPlaylist } = useContext(SocketContext);
   const [songList, setSongList] = useState<Array<SongDocument>>([]);
   const songListRef = useRef(songList);
 
@@ -27,17 +28,6 @@ const PlayerComponent = () => {
       setSongList(response.data.song_list);
     } catch (err) {
       console.error(err);
-    }
-  }
-
-  const getYoutubeVideoId = (song_url: string) => {
-    if (song_url.includes('youtube')) {
-      const url = new URL(song_url);
-      const params = new URLSearchParams(url.searchParams);
-      return params.get('v') as string
-    } else {
-      const url = new URL(song_url);
-      return url.pathname.replace('/', '') as string;
     }
   }
 
@@ -77,7 +67,6 @@ const PlayerComponent = () => {
     if (!socket?.connected || room === '') return;
 
     getCurrentSongList();
-    console.log(socket);
     
     socket.on('song-queue', (data: Array<SongDocument>) => {
       console.log('list updated: ', data);
@@ -87,6 +76,7 @@ const PlayerComponent = () => {
   }, [socket?.connected, room]);
 
   useEffect(() => {
+    setCurrentSongPlaylist(songList);
     if (songList.length === 0) return;
 
     syncCurrentTime();
@@ -210,9 +200,19 @@ const PlayerComponent = () => {
     }
   }, [currentSong]);
 
+  // MOCK FOR LAYOUT ONLY, REMOVING LATER
+  useEffect(() => {
+    setCurrentSong({
+      url: '9i38FPugxB8',
+      id: 'DEBUG',
+      platform: 'yt', 
+      time_to_play: Date.now(), 
+    })
+  }, []);
+
   return <>
     {currentSong?.platform === 'yt' && (
-      <div 
+      <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9"}}
         ref={youtubeIframe}
       />
     )}

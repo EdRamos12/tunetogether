@@ -82,12 +82,10 @@ export default class MusicQueueController {
 
   respond(socket: ServerSocket) {
     socket.on('request-song', async (song: string) => {
-      console.log('YHAUDSJSD')
       if (Array.from(socket.rooms).length >= 3) {
         socket.emit('request-song-status', 'You are on two rooms! Leave one so you can submit to a proper room!');
       }
 
-      let duration;
       const options = parse(song, true);
       const current_socket_room = Array.from(socket.rooms).find((room: any) => room.length === RoomLength)
 
@@ -96,13 +94,15 @@ export default class MusicQueueController {
       const result = await collection.findOne({ room_id: current_socket_room });
 
       if (options.host?.includes('youtu.be') || options.host?.includes('youtube')) {
-        let ytOptions;
-        if (options.host?.includes('youtu.be')) {
-          ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${options.path?.replace('/', '')}&part=contentDetails&key=${process.env.YOUTUBE_API_KEY}`) as any;
-        } else {
-          ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${options.query.v}&part=contentDetails&key=${process.env.YOUTUBE_API_KEY}`) as any;
-        }
-        duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string) * 1000;
+        const videoId = 
+          options.host?.includes('youtu.be') ? options.path?.replace('/', '') : 
+          options.pathname?.includes('shorts') ? options.pathname.replace('/shorts/', '') : 
+          options.query.v;
+
+        const ytOptions = await axios.get(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails&part=snippet&key=${process.env.YOUTUBE_API_KEY}`) as any;
+
+        const duration = youtubeDurationToSeconds(ytOptions.data.items[0].contentDetails.duration as string) * 1000;
+        const { title, channelTitle } = ytOptions.data.items[0].snippet;
 
         let time_to_play: number;
         const threshold = .01 * 1000;
@@ -116,11 +116,14 @@ export default class MusicQueueController {
         }
         const updatedSongList = filterMusicPlaylist(result?.song_list);
 
-        const musicToRequest = {
+        const musicToRequest: SongDocument = {
           id: v4(),
           song_url: song,
           time_to_play,
-          duration
+          duration,
+          title,
+          channelTitle,
+          requested_by: socket.userId as string,
         };
 
         await client.connect();
