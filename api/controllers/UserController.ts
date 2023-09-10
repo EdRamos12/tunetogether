@@ -140,7 +140,6 @@ export default class UserController {
   async auth(_: NextApiRequest, res: NextApiResponse) { 
     // this function is going to use the middleware to check things :P
     // don't know if i update the user's token, for now it's a TODO
-    
     return res.status(200).json({ message: 'Ok!' });
   }
 

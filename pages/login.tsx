@@ -1,18 +1,25 @@
 import axios from 'axios';
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import Router from 'next/router';
-import React, { useState } from 'react';
+import Router, { useRouter } from 'next/router';
+import React, { useContext, useEffect, useState } from 'react';
 import styles from '../styles/Login.module.css';
 import TextInput from '../components/TextInput';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
+import { AuthContext } from '../context/AuthContext';
+import Loading from '../components/screens/Loading';
 
 const Login: NextPage = () => {
+  const router = useRouter();
+  const {authState} = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [fetching, setFetching] = useState(false);
+
+  useEffect(() => {
+    if (authState === true) router.replace('/');
+  }, [authState]);
 
   const handleAuthentication = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +41,11 @@ const Login: NextPage = () => {
     }
     return true;
   }
+
+  if (authState === undefined || authState === true) {
+    return <Loading />;
+  }
+
   return (
     <div className={styles.container}>
       <Head>

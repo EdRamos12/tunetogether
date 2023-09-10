@@ -8,6 +8,8 @@ import { SocketContext } from '../../context/SocketContext';
 import PlayerComponent from '../../components/PlayerComponent';
 import getYoutubeVideoId from "../../utils/getYoutubeVideoId";
 import ChatMessage from "../../components/ChatMessage";
+import { AuthContext } from "../../context/AuthContext";
+import Loading from "../../components/screens/Loading";
 
 const formatMessage = (str: string) => {
   const formattedString = str.replace(/\s{2,}/g, ' ').trim();
@@ -19,6 +21,7 @@ const Room: NextPage = () => {
   const router = useRouter();
   const {code} = router.query;
   const {socket, changeRoom, currentSongPlaylist} = useContext(SocketContext);
+  const {authState} = useContext(AuthContext);
   const [socketConnected, setSocketConnected] = useState(false);
   const [messages, setMessages] = useState([] as any);
   const [message, setMessage] = useState('');
@@ -26,6 +29,10 @@ const Room: NextPage = () => {
   const [roomPassword, setRoomPassword] = useState('');
   const [connectedToRoom, setConnectedToRoom] = useState(false);
   const [codeAvailable, setCodeAvailable] = useState(false);
+
+  useEffect(() => {
+    if (authState === false) router.replace('/login');
+  }, [authState]);
 
   // checks to see if socket successfully connected to server
   useEffect(() => {
@@ -92,7 +99,11 @@ const Room: NextPage = () => {
     });
     
     changeRoom(code as string);
-  }, [connectedToRoom])
+  }, [connectedToRoom]);
+
+  if (authState === undefined || authState === false) {
+    return <Loading />;
+  }
 
   return (
     <div className={styles.container}>
@@ -290,7 +301,7 @@ const Room: NextPage = () => {
             <h1>Chat</h1>
 
             <div className={styles.messagesContainer}>
-              {messages.length > 0 ? messages.map((msg: any, i: number) => (
+              {messages.length > 0 ? messages.map((msg: { user: string, text: string }, i: number) => (
                 <ChatMessage key={i} user={msg.user as string} style={{
                   background: (i+1)%2 === 0 ? 'rgba(0,0,0,.2)' : 'none'
                 }}>
