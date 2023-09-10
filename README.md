@@ -1,7 +1,7 @@
 
-# 🎵 Online Party!
+# 🎵 TuneTogether!
 
-The app was made to connect you and your friends, into listening podcasts, videos and music together! This tool was made for studying purposes, to embed different applications and how to synchronize them with multiple people. It does not collect **any**  costs nor does it have transactional fees included.
+The app was made to connect you and your friends, into listening podcasts, videos and music together! This tool was made for studying purposes, to embed different applications and how to synchronize them with multiple clients. The app does not have transactional fees included.
 
 **🚧 Project currently being made. 🚧**
 
@@ -13,14 +13,13 @@ Check the list for more details about the project.
 - [x] Request song/video feature
 - [x] Make a functional chat
 - [x] Sync time with everyone that enters the room
-- [ ] (re)Make website layout
-- [ ] Make an actual functional online playlist
+- [x] (re)Make website layout
+- [ ] Make rooms (private/public) with sharable code
 - [ ] Skip song/video (owner permissions/vote system)
 - [ ] Add ratio system (like/dislikes)
-- [ ] Make rooms (private/public) with sharable code
 - [ ] Make public list of servers
+- [ ] Make an actual functional online playlist
 - [ ] E-mail verification
-- [ ] Working audio vizualiser on background!!
 - [ ] Role system(???) + Reaction system(???)
 - [ ] Advanced: background animated + reacts to the music beat
 
@@ -29,9 +28,8 @@ Check the list for more details about the project.
 ### ❔ Requirements
 
 In case you want to run this project, you will need:
-- [Git](https://git-scm.com/) 
-- [Yarn](https://classic.yarnpkg.com/lang/en/)
-- [NodeJS](https://nodejs.org/en/) 
+- [Git](https://git-scm.com/)
+- [NodeJS](https://nodejs.org/en/)  or [Bun](https://bun.sh/)
 
 ### 📋 Cloning this repo
 
@@ -51,11 +49,11 @@ $ cd online-party-app
 </blockquote>
 
 ```bash
-# Install dependencies (You can either use yarn or npm as package manager)
-$ yarn # or 'npm i'
+# Install dependencies (You can either use npm or bun as package manager)
+$ npm install # or 'bun install'
 
 # Running the application
-$ yarn dev # or 'npm run dev'
+$ npm run dev # or 'bun run dev'
 ```
 Website address: [http://localhost:3000/](http://localhost:3000/).
 
