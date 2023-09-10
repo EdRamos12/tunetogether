@@ -200,22 +200,12 @@ const PlayerComponent = () => {
     }
   }, [currentSong]);
 
-  // MOCK FOR LAYOUT ONLY, REMOVING LATER
-  useEffect(() => {
-    setCurrentSong({
-      url: '9i38FPugxB8',
-      id: 'DEBUG',
-      platform: 'yt', 
-      time_to_play: Date.now(), 
-    })
-  }, []);
-
   return <>
-    {currentSong?.platform === 'yt' && (
+    {currentSong?.platform === 'yt' ? (
       <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9"}}
         ref={youtubeIframe}
       />
-    )}
+    ) : <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9", background: "black"}} />}
   </>
 }
 
