@@ -14,6 +14,7 @@ import { errors } from 'celebrate';
 import client from '../utils/client';
 import RoomLength from '../utils/types/RoomLength';
 import ServerSocket from '../utils/types/ServerSocketUserId';
+import logger from '../utils/backend/logger';
 
 const room_controller = new RoomController();
 const music_queue_controller = new MusicQueueController();
@@ -28,8 +29,8 @@ let io: Server;
 
 const deleteRoom = async (room: string) => {
   try {
-    await client.db(process.env.DB_NAME).collection("rooms").deleteOne({ room_id: room });  
-    console.log(`IO Room ${room} has been deleted`);
+    await client.db(process.env.DB_NAME).collection("rooms").deleteOne({ room_id: room });
+    logger.debug(`IO Room ${room} has been deleted`);
   } catch (err) {
     if (err) throw err;
   }
@@ -38,7 +39,7 @@ const deleteRoom = async (room: string) => {
 const deleteAllRooms = async () => {
   try {
     await client.db(process.env.DB_NAME).collection("rooms").deleteMany({}); 
-    console.log(`All rooms been reset! (server start)`);
+    logger.info(`All rooms been reset! (server start)`);
   } catch (err) {
     if (err) throw err;
   }
@@ -67,7 +68,7 @@ app.prepare().then(() => {
   // room created, happens when someone tries to join a room for the first time
   io.of('/').adapter.on('create-room', (room) => { 
     if (room.length > RoomLength) return;
-    console.log(`IO Room ${room} has been created`);
+    logger.debug(`IO Room ${room} has been created`);
   });
 
   // room deleted, happens when no one is at the room anymore
@@ -78,7 +79,7 @@ app.prepare().then(() => {
   });
 
   io.on('connection', async (socket: ServerSocket) => {
-    console.log(`Client connected => ${socket.userId} ${socket.id}`);
+    logger.debug(`Client connected => ${socket.userId} ${socket.id}`);
 
     await client.connect();
 
@@ -101,7 +102,7 @@ app.prepare().then(() => {
     chat_controller.respond(socket, io);
 
     socket.on('disconnect' , async () => {
-      console.log(`Client disconnected => ${socket.userId}`);
+      logger.debug(`Client disconnected => ${socket.userId}`);
 
       await client.connect();
 
@@ -125,7 +126,7 @@ app.prepare().then(() => {
 
   httpServer.listen(port, () => {
     deleteAllRooms();
-    console.log(`Server listening at http://localhost:${port} as ${dev ? 'development' : process.env.NODE_ENV}`);
+    logger.info(`Server listening at http://localhost:${port} as ${dev ? 'development' : process.env.NODE_ENV}`);
   });
 });
 

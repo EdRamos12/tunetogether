@@ -2,6 +2,8 @@ import client from "../../utils/client";
 import { io } from "../server";
 import RoomLength from "../../utils/types/RoomLength";
 import ServerSocket from "../../utils/types/ServerSocketUserId";
+import logger from "../../utils/backend/logger";
+import Room from "../../utils/types/Room";
 
 const leaveAllRooms = (obj: ServerSocket) => {
   obj.rooms.forEach((element: string) => {
@@ -33,12 +35,20 @@ export default class RoomController {
         // if room is non existent, then create room in DB
         if (!data || data == null) { 
           await collection.insertOne({
+            room_name: `${socket.userId}'s room`,
             room_id: room,
             password,
             owner: socket.userId,
             song_list: [],
-            users: [socket.userId]
-          });
+            users: [socket.userId],
+            config: {
+              disable_entrance: false,
+              strict_chat: false,
+              public_listing: true,
+              visible_playlist: true,
+              skipping_method: 'ratio',
+            }
+          } as Room);
           io.in(room).emit('message', {user: socket.userId, text: 'i just created the room'});
         } else {
           if (!data.password) {
@@ -60,7 +70,7 @@ export default class RoomController {
         }
       } catch (err) {
         socket.emit('server-exception', 'there was an error trying to find that ');
-        console.log(err);
+        logger.error(err);
       } finally {
         socket.emit('join-status', true);
       }

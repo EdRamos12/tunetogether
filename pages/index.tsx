@@ -7,7 +7,7 @@ import { HomeIcon, PersonIcon, PlusCircleIcon, PlusIcon, SearchIcon, SignInIcon 
 import NavbarButton from '../components/NavbarButton';
 import ChatMessage from '../components/ChatMessage';
 import { SocketContext } from '../context/SocketContext';
-import PlayerComponent from '../components/PlayerComponent';
+import PlayerComponent from '../components/player/PlayerComponent';
 
 const formatMessage = (str: string) => {
   const formattedString = str.replace(/\s{2,}/g, ' ').trim();

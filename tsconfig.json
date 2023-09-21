@@ -18,9 +18,9 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": ["youtube"]
   },
   "include": [
+    "utils/types/youtube.d.ts",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
