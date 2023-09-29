@@ -20,8 +20,27 @@ const PlayerComponent = () => {
   const [ytPlayer, setYrPlayer] = useState<YT.Player | undefined>(undefined);
   const ytPlayerRef = useRef(ytPlayer);
 
-  const manageProgressBar = (currentPercent = 0) => {
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const progressBarValue = useRef<any>(null); //change 'any' later 
+
+  const syncProgressBar = (fromBeginning = false) => {
+    console.log('i got called');
+    //console.log((!ytPlayerRef.current?.getVideoUrl().includes(currentSongRef.current.url as string)));
+    if ((!progressBarRef.current || !ytPlayerRef.current) || ytPlayerRef.current.getCurrentTime === undefined || ytPlayerRef.current.getVideoUrl === undefined || (!ytPlayerRef.current.getVideoUrl() || !ytPlayerRef.current.getVideoUrl().includes(currentSongRef.current.url as string))) {
+      setTimeout(() => syncProgressBar(fromBeginning), 100);
+      return;
+    }
+    //console.log(ytPlayerRef.current.getVideoUrl());
+
+    // first, reset progress bar
+    progressBarRef.current.style.width = '0%';
     
+    if (!fromBeginning) progressBarRef.current.style.width = `${((ytPlayerRef.current.getCurrentTime() * 100) / ytPlayerRef.current.getDuration() - .1).toFixed(2)}%`;
+
+    progressBarValue.current = setInterval(() => {
+      if (progressBarRef.current === null) return;
+      progressBarRef.current.style.width = `${ytPlayerRef.current!.getCurrentTime() * 100 / ytPlayerRef.current!.getDuration()}%`
+    }, 900);
   }
 
   const getCurrentSongList = async () => {
@@ -39,16 +58,14 @@ const PlayerComponent = () => {
     const latency = Date.now() - start_time;
     const current_song_index = current_time.data.song_list?.findIndex((item: any) => item.id === current_time.data.current_song.id);
 
-    setLastTimeSynced({
-      last_time: Date.now(),
-      video_synced_index: current_song_index || 0,
-      last_time_video: (current_time.data.current_server_time + latency - current_time.data.current_song.time_to_play) / 1000
-    });
-    lastTimeSyncedRef.current = {
+    const lastTimeSynced = {
       last_time: Date.now(),
       video_synced_index: current_song_index || 0,
       last_time_video: (current_time.data.current_server_time + latency - current_time.data.current_song.time_to_play) / 1000
     }
+
+    setLastTimeSynced(lastTimeSynced);
+    lastTimeSyncedRef.current = lastTimeSynced;
 
     const current_song = current_time.data.current_song.song_url as string;
 
@@ -63,6 +80,8 @@ const PlayerComponent = () => {
       currentSongRef.current = current_song_state;
       setCurrentSong(current_song_state);
     }
+    syncProgressBar();
+
     return current_time;
   }
 
@@ -116,6 +135,8 @@ const PlayerComponent = () => {
         const resyncVideoLocally = () => {
           //console.log('RESYNCED');
           //console.log(event.target.getVideoUrl(), currentSongRef.current.url)
+          if (new_time >= event.target.getDuration()) return false;
+          
           if (event.target.getVideoUrl().includes(currentSongRef.current.url as string)) event.target.seekTo(new_time, true);
           const last_synced = {
             last_time: Date.now(),
@@ -124,6 +145,7 @@ const PlayerComponent = () => {
           }
           lastTimeSyncedRef.current = last_synced;
           setLastTimeSynced(last_synced);
+          return true;
         }
 
 
@@ -148,12 +170,12 @@ const PlayerComponent = () => {
             resyncVideoLocally();
             break;
           case window.YT.PlayerState.ENDED:
-  
+
+          
             if (difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time > 1.5 || difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time < -1.5) {
-              //console.log(difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time > 1.5)
-              //console.log(difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time < -1.5)
-              resyncVideoLocally(); 
-              break;
+              //console.log('tried to sync');
+              // if this returns false, the website determined that the video will sync to when the video is already finished, so it'll just continue as usual
+              if (resyncVideoLocally()) break;
             }
 
             const current_song_list = songListRef.current;
@@ -161,13 +183,27 @@ const PlayerComponent = () => {
             const index_from_current_song = current_song_list.findIndex(item => item.id === currentSongRef.current.id);
   
             if (index_from_current_song === -1 && current_song_list.length > 0) {
+              //console.log("couldn't find any new song");
               syncCurrentTime();
               break;
             } 
             
-            if (current_song === current_song_list[current_song_list.length - 1]) break;
-  
-            event.target.loadVideoById(getYoutubeVideoId(current_song_list[index_from_current_song + 1].song_url));
+
+            if (current_song === current_song_list[current_song_list.length - 1]) {
+              //console.log('it determined it was the last song on the playlist')
+              break;
+            }
+            
+            const newCurrentSong = {
+              id: current_song_list[index_from_current_song + 1].id,
+              platform: current_song_list[index_from_current_song + 1].song_url.includes('youtube') || current_song_list[index_from_current_song + 1].song_url.includes('youtu.be') ? 'yt' : 'soundcloud',
+              requested_by: current_song_list[index_from_current_song + 1].requested_by,
+              time_to_play: current_song_list[index_from_current_song + 1].time_to_play,
+              url: current_song_list[index_from_current_song + 1].song_url.includes('youtube') || current_song_list[index_from_current_song + 1].song_url.includes('youtu.be') ? getYoutubeVideoId(current_song_list[index_from_current_song + 1].song_url) : '',
+            }
+            
+            currentSongRef.current = newCurrentSong;
+            setCurrentSong(newCurrentSong);
 
             break;
         }
@@ -209,17 +245,10 @@ const PlayerComponent = () => {
       };
     } else {
       ytPlayer.loadVideoById(currentSongRef.current.url as string);
+      if (progressBarValue.current) clearInterval(progressBarValue.current);
+      syncProgressBar(true);
     }
   }, [currentSong]);
-
-  const loadProgressBar = (setWidth100 = false) => {
-    if (!setWidth100) {
-      loadProgressBar(true);
-      return (ytPlayerRef.current?.getCurrentTime() || 1 * 100) / (ytPlayerRef.current?.getDuration() || 1);
-    }
-    
-    return 100;
-  }
 
   return <div className={styles.player}>
     {currentSong?.platform === 'yt' ? (
@@ -229,13 +258,13 @@ const PlayerComponent = () => {
     ) : <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9", background: "black"}} />}
 
     <div className={styles.progress}>
-      {ytPlayerRef.current?.getCurrentTime !== undefined && <div
-        onLoad={(event) => {event.currentTarget.className = 'width100';}}
+      <div
+        ref={progressBarRef}  
         style={{
-          width: `${(ytPlayerRef.current?.getCurrentTime() || 1 * 100) / (ytPlayerRef.current?.getDuration() || 1)}%`,
-          animationDuration: `${(ytPlayerRef.current?.getDuration() || 11) - (ytPlayerRef.current?.getCurrentTime() || 10)}s`
+          width: `0%`,
+          transition: 'width linear .9s'
         }}
-      />}
+      />
     </div>
 
     <div className={styles.playerButtons}>
