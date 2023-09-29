@@ -74,6 +74,17 @@
   margin-top: -50px !important;
 }
 
+.playerPauseOverlay {
+  background: "rgba(0,0,0,.5)";
+  width: "100%";
+  height: "auto";
+  aspect-ratio: "16 / 9";
+  justify-content: 'center';
+  align-items: 'center';
+  position: 'absolute';
+  flex-direction: 'column';
+}
+
 .centralizePlayerVertically {
   height: calc(100vh);
   display: flex;

@@ -20,6 +20,11 @@ const PlayerComponent = () => {
   const [ytPlayer, setYrPlayer] = useState<YT.Player | undefined>(undefined);
   const ytPlayerRef = useRef(ytPlayer);
 
+  const [videoPaused, setVideoPaused] = useState(false);
+  const videoPausedRef = useRef(videoPaused);
+  const [playerState, setPlayerState] = useState(-1);
+  const playerStateRef = useRef<number>(playerState);
+
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressBarValue = useRef<any>(null); //change 'any' later 
 
@@ -86,6 +91,16 @@ const PlayerComponent = () => {
   }
 
   useEffect(() => {
+    if (videoPaused) {
+      clearInterval(progressBarValue.current);
+      ytPlayer?.pauseVideo();
+    } else if (!videoPaused && ytPlayer) {
+      syncProgressBar();
+      ytPlayer.playVideo();
+    }
+  }, [videoPaused]);
+
+  useEffect(() => {
     if (!socket?.connected || room === '') return;
 
     getCurrentSongList();
@@ -122,6 +137,9 @@ const PlayerComponent = () => {
       firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
       const onPlayerChangedPlayingStatus = (event: YT.OnStateChangeEvent) => {
+        playerStateRef.current = event.data;
+        setPlayerState(event.data);
+
         const currentLastTimeSynced = lastTimeSyncedRef.current;
         const tolerance_in_seconds = 1.5
         const difference_when_last_synced_locally_using_date_now = Date.now() - (currentLastTimeSynced?.last_time || 0);
@@ -154,7 +172,11 @@ const PlayerComponent = () => {
             event.target.playVideo();
             break;
           case window.YT.PlayerState.PAUSED:
-            event.target.playVideo();
+            if (!videoPausedRef.current) {
+              event.target.playVideo();
+            } else {
+              break;
+            }
           case window.YT.PlayerState.PLAYING:
             if (difference_when_last_synced_locally_using_date_now / 1000 < tolerance_in_seconds) break; 
   
@@ -251,11 +273,24 @@ const PlayerComponent = () => {
   }, [currentSong]);
 
   return <div className={styles.player}>
-    {currentSong?.platform === 'yt' ? (
-      <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9"}}
-        ref={youtubeIframe}
-      />
-    ) : <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9", background: "black"}} />}
+    <div style={{
+      position: 'relative'
+    }}>
+      <div className={styles.playerPauseOverlay} style={{
+        display: videoPaused ? 'flex' : 'none'
+      }}>
+        <svg xmlns="http://www.w3.org/2000/svg" height="10rem" viewBox="0 0 320 512" fill="white">
+          {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
+          <path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
+        </svg>
+        <h1>Paused.</h1>  
+      </div>
+      {currentSong?.platform === 'yt' ? (
+        <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9"}}
+          ref={youtubeIframe}
+        />
+      ) : <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9", background: "black"}} />}
+    </div>
 
     <div className={styles.progress}>
       <div
@@ -269,12 +304,22 @@ const PlayerComponent = () => {
 
     <div className={styles.playerButtons}>
       <div className={styles.leftSide}>
-        <button>
+        <button onClick={() => {
+          if (playerStateRef.current === window?.YT.PlayerState.PAUSED || playerStateRef.current === window?.YT.PlayerState.PLAYING) setVideoPaused(current => {
+            videoPausedRef.current = !current;
+            return !current
+          })
+        }}>
           {/* pause */}
-          <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
+          {!videoPaused && <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
             {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
             <path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
-          </svg>
+          </svg>}
+          {/* play */}
+          {videoPaused && <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512">
+            {/* <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
+            <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
+          </svg>}
         </button>
 
         <button onClick={syncCurrentTime}>
