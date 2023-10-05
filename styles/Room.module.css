@@ -41,11 +41,6 @@
   height: calc(100vh);
 }
 
-.mainSidebar {
-  width: 30%;
-  max-width: 300px;
-}
-
 .playerContainer {
   flex: 1;
   /* display: flex; */
@@ -53,7 +48,6 @@
   align-items: center; */
   overflow-y: auto;
   color: white;
-  padding: 0 10px;
   padding-bottom: 100px;
 }
 
@@ -67,11 +61,10 @@
 
 .player {
   width: 100%;
-  background: linear-gradient(#090110, #2E0D3D);
-  padding: 22px;
+  /* background: linear-gradient(#090110, #2E0D3D); */
   border-radius: 20px;
   height: min-content;
-  margin-top: -50px !important;
+  /* margin-top: -50px !important; */
 }
 
 .playerPauseOverlay {

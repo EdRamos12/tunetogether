@@ -5,48 +5,38 @@ import axiosInstance from "../../utils/axiosInstance";
 import getYoutubeVideoId from "../../utils/getYoutubeVideoId";
 import styles from '../../styles/Room.module.css';
 
+interface Song {
+  url?: string, 
+  platform?: string, 
+  time_to_play?: number, 
+  id?: string, 
+  requested_by?: string
+}
+
+interface LastTimeSynced {
+  last_time?: number, 
+  last_time_video?: number, 
+  video_synced_index?: number
+}
+
 const PlayerComponent = () => {
   const { socket, room, setCurrentSongPlaylist } = useContext(SocketContext);
   const [songList, setSongList] = useState<Array<SongDocument>>([]);
   const songListRef = useRef(songList);
 
-  const [currentSong, setCurrentSong] = useState<{ url?: string, platform?: string, time_to_play?: number, id?: string, requested_by?: string }>({});
+  const [currentSong, setCurrentSong] = useState<Song>({});
   const currentSongRef = useRef(currentSong);
 
-  const [lastTimeSynced, setLastTimeSynced] = useState<{ last_time?: number, last_time_video?: number, video_synced_index?: number }>({});
+  const [lastTimeSynced, setLastTimeSynced] = useState<LastTimeSynced>({});
   let lastTimeSyncedRef = useRef(lastTimeSynced);
 
   const youtubeIframe = useRef<HTMLIFrameElement>(null);
   const [ytPlayer, setYrPlayer] = useState<YT.Player | undefined>(undefined);
   const ytPlayerRef = useRef(ytPlayer);
 
-  const [videoPaused, setVideoPaused] = useState(false);
-  const videoPausedRef = useRef(videoPaused);
   const [playerState, setPlayerState] = useState(-1);
   const playerStateRef = useRef<number>(playerState);
-
-  const progressBarRef = useRef<HTMLDivElement>(null);
   const progressBarValue = useRef<any>(null); //change 'any' later 
-
-  const syncProgressBar = (fromBeginning = false) => {
-    console.log('i got called');
-    //console.log((!ytPlayerRef.current?.getVideoUrl().includes(currentSongRef.current.url as string)));
-    if ((!progressBarRef.current || !ytPlayerRef.current) || ytPlayerRef.current.getCurrentTime === undefined || ytPlayerRef.current.getVideoUrl === undefined || (!ytPlayerRef.current.getVideoUrl() || !ytPlayerRef.current.getVideoUrl().includes(currentSongRef.current.url as string))) {
-      setTimeout(() => syncProgressBar(fromBeginning), 100);
-      return;
-    }
-    //console.log(ytPlayerRef.current.getVideoUrl());
-
-    // first, reset progress bar
-    progressBarRef.current.style.width = '0%';
-    
-    if (!fromBeginning) progressBarRef.current.style.width = `${((ytPlayerRef.current.getCurrentTime() * 100) / ytPlayerRef.current.getDuration() - .1).toFixed(2)}%`;
-
-    progressBarValue.current = setInterval(() => {
-      if (progressBarRef.current === null) return;
-      progressBarRef.current.style.width = `${ytPlayerRef.current!.getCurrentTime() * 100 / ytPlayerRef.current!.getDuration()}%`
-    }, 900);
-  }
 
   const getCurrentSongList = async () => {
     try {
@@ -85,20 +75,32 @@ const PlayerComponent = () => {
       currentSongRef.current = current_song_state;
       setCurrentSong(current_song_state);
     }
-    syncProgressBar();
 
     return current_time;
   }
 
-  useEffect(() => {
-    if (videoPaused) {
-      clearInterval(progressBarValue.current);
-      ytPlayer?.pauseVideo();
-    } else if (!videoPaused && ytPlayer) {
-      syncProgressBar();
-      ytPlayer.playVideo();
+  const resyncVideo = () => {
+    if (!ytPlayerRef.current) return false;
+
+    const previous_time_stamp = (lastTimeSynced.last_time_video!) + ((Date.now() - (lastTimeSynced.last_time || 0)) / 1000);
+    const difference_in_seconds = previous_time_stamp - ytPlayerRef.current.getCurrentTime();
+
+    const new_time = Math.floor(ytPlayerRef.current.getCurrentTime() + difference_in_seconds);
+
+    //console.log('RESYNCED');
+    //console.log(ytPlayerRef.current.getVideoUrl(), currentSongRef.current.url)
+    if (new_time >= ytPlayerRef.current.getDuration()) return false;
+    
+    if (ytPlayerRef.current.getVideoUrl().includes(currentSongRef.current.url as string)) ytPlayerRef.current.seekTo(new_time, true);
+    const last_synced = {
+      last_time: Date.now(),
+      video_synced_index: songListRef.current.findIndex(item => item.id === currentSongRef.current.id),
+      last_time_video: new_time,
     }
-  }, [videoPaused]);
+    lastTimeSyncedRef.current = last_synced;
+    setLastTimeSynced(last_synced);
+    return true;
+  }
 
   useEffect(() => {
     if (!socket?.connected || room === '') return;
@@ -136,6 +138,27 @@ const PlayerComponent = () => {
       const firstScriptTag = document.getElementsByTagName("script")[0];
       firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
+      const resyncVideoLocally = (event: YT.OnStateChangeEvent | YT.PlayerEvent, currentLastTimeSynced: LastTimeSynced) => {
+        const previous_time_stamp = (currentLastTimeSynced.last_time_video!) + ((Date.now() - (currentLastTimeSynced.last_time || 0)) / 1000);
+        const difference_in_seconds = previous_time_stamp - event.target.getCurrentTime();
+
+        const new_time = Math.floor(event.target.getCurrentTime() + difference_in_seconds);
+
+        //console.log('RESYNCED');
+        //console.log(event.target.getVideoUrl(), currentSongRef.current.url)
+        if (new_time >= event.target.getDuration()) return false;
+        
+        if (event.target.getVideoUrl().includes(currentSongRef.current.url as string)) event.target.seekTo(new_time, true);
+        const last_synced = {
+          last_time: Date.now(),
+          video_synced_index: songListRef.current.findIndex(item => item.id === currentSongRef.current.id),
+          last_time_video: new_time,
+        }
+        lastTimeSyncedRef.current = last_synced;
+        setLastTimeSynced(last_synced);
+        return true;
+      }
+
       const onPlayerChangedPlayingStatus = (event: YT.OnStateChangeEvent) => {
         playerStateRef.current = event.data;
         setPlayerState(event.data);
@@ -145,38 +168,16 @@ const PlayerComponent = () => {
         const difference_when_last_synced_locally_using_date_now = Date.now() - (currentLastTimeSynced?.last_time || 0);
         const difference_when_last_synced_locally_using_video_time = event.target.getCurrentTime() - (currentLastTimeSynced?.last_time_video || 0);
 
-        const previous_time_stamp = (currentLastTimeSynced.last_time_video!) + ((Date.now() - (currentLastTimeSynced.last_time || 0)) / 1000);
-        const difference_in_seconds = previous_time_stamp - event.target.getCurrentTime();
-
-        const new_time = Math.floor(event.target.getCurrentTime() + difference_in_seconds);
-
-        const resyncVideoLocally = () => {
-          //console.log('RESYNCED');
-          //console.log(event.target.getVideoUrl(), currentSongRef.current.url)
-          if (new_time >= event.target.getDuration()) return false;
-          
-          if (event.target.getVideoUrl().includes(currentSongRef.current.url as string)) event.target.seekTo(new_time, true);
-          const last_synced = {
-            last_time: Date.now(),
-            video_synced_index: songListRef.current.findIndex(item => item.id === currentSongRef.current.id),
-            last_time_video: new_time,
-          }
-          lastTimeSyncedRef.current = last_synced;
-          setLastTimeSynced(last_synced);
-          return true;
-        }
-
-
         switch (event.data) {
           case window.YT.PlayerState.UNSTARTED:
             event.target.playVideo();
             break;
           case window.YT.PlayerState.PAUSED:
-            if (!videoPausedRef.current) {
-              event.target.playVideo();
-            } else {
-              break;
-            }
+            // if (!videoPausedRef.current) {
+            //   event.target.playVideo();
+            // } else {
+            //   break;
+            // }
           case window.YT.PlayerState.PLAYING:
             if (difference_when_last_synced_locally_using_date_now / 1000 < tolerance_in_seconds) break; 
   
@@ -189,7 +190,7 @@ const PlayerComponent = () => {
             // console.log(`difference is about: ${Math.floor(difference_in_seconds / 60)}:${String(Math.floor(difference_in_seconds - Math.floor(difference_in_seconds / 60) * 60)).padStart(2, '0')}`);
             // console.log(`it should be at: ${Math.floor(new_time / 60)}:${String(Math.floor(new_time - Math.floor(new_time / 60) * 60)).padStart(2, '0')}`);
   
-            resyncVideoLocally();
+            resyncVideoLocally(event, currentLastTimeSynced);
             break;
           case window.YT.PlayerState.ENDED:
 
@@ -197,7 +198,7 @@ const PlayerComponent = () => {
             if (difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time > 1.5 || difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time < -1.5) {
               //console.log('tried to sync');
               // if this returns false, the website determined that the video will sync to when the video is already finished, so it'll just continue as usual
-              if (resyncVideoLocally()) break;
+              if (resyncVideoLocally(event, currentLastTimeSynced)) break;
             }
 
             const current_song_list = songListRef.current;
@@ -234,6 +235,7 @@ const PlayerComponent = () => {
       const onPlayerReady = (event: YT.PlayerEvent) => {
         event.target.seekTo(lastTimeSyncedRef.current.last_time_video as number, true);
         event.target.playVideo();
+        resyncVideoLocally(event, lastTimeSyncedRef.current);
       };
   
       const onPlayerPlaybackRateChange = (event: YT.PlayerEvent) => {
@@ -247,7 +249,7 @@ const PlayerComponent = () => {
           videoId: currentSongRef.current.url,
           playerVars: {
             autoplay: 1,
-            controls: 0 
+            //controls: 0 
           },
           events: {
             onStateChange: onPlayerChangedPlayingStatus,
@@ -268,23 +270,11 @@ const PlayerComponent = () => {
     } else {
       ytPlayer.loadVideoById(currentSongRef.current.url as string);
       if (progressBarValue.current) clearInterval(progressBarValue.current);
-      syncProgressBar(true);
     }
   }, [currentSong]);
 
   return <div className={styles.player}>
-    <div style={{
-      position: 'relative'
-    }}>
-      <div className={styles.playerPauseOverlay} style={{
-        display: videoPaused ? 'flex' : 'none'
-      }}>
-        <svg xmlns="http://www.w3.org/2000/svg" height="10rem" viewBox="0 0 320 512" fill="white">
-          {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
-          <path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
-        </svg>
-        <h1>Paused.</h1>  
-      </div>
+    <div>
       {currentSong?.platform === 'yt' ? (
         <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9"}}
           ref={youtubeIframe}
@@ -292,37 +282,9 @@ const PlayerComponent = () => {
       ) : <div style={{width: "100%", height: "auto", aspectRatio: "16 / 9", background: "black"}} />}
     </div>
 
-    <div className={styles.progress}>
-      <div
-        ref={progressBarRef}  
-        style={{
-          width: `0%`,
-          transition: 'width linear .9s'
-        }}
-      />
-    </div>
-
     <div className={styles.playerButtons}>
       <div className={styles.leftSide}>
-        <button onClick={() => {
-          if (playerStateRef.current === window?.YT.PlayerState.PAUSED || playerStateRef.current === window?.YT.PlayerState.PLAYING) setVideoPaused(current => {
-            videoPausedRef.current = !current;
-            return !current
-          })
-        }}>
-          {/* pause */}
-          {!videoPaused && <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
-            {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
-            <path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
-          </svg>}
-          {/* play */}
-          {videoPaused && <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512">
-            {/* <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
-            <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
-          </svg>}
-        </button>
-
-        <button onClick={syncCurrentTime}>
+        <button onClick={() => resyncVideo()}>
           {/* re-sync */}
           <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512">
             {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
@@ -347,14 +309,6 @@ const PlayerComponent = () => {
 
       <div className={styles.rightSide}>
         <button>
-          {/* volume */}
-          <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
-            {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
-            <path d="M301.1 34.8C312.6 40 320 51.4 320 64V448c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352H64c-35.3 0-64-28.7-64-64V224c0-35.3 28.7-64 64-64h67.8L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3zM412.6 181.5C434.1 199.1 448 225.9 448 256s-13.9 56.9-35.4 74.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C393.1 284.4 400 271 400 256s-6.9-28.4-17.7-37.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5z"/>
-          </svg>
-        </button>
-
-        <button>
           {/* report */}
           <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
             {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
@@ -362,7 +316,9 @@ const PlayerComponent = () => {
           </svg>
         </button>
 
+        {/* votes */}
         <div className={styles.upvotes}>
+          {/* upvote */}
           <button>
             <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
               {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->*/}
@@ -370,6 +326,7 @@ const PlayerComponent = () => {
             </svg>
           </button>
 
+        {/* downvote */}
           <button>
             <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
               {/* <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->*/}
