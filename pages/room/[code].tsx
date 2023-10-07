@@ -196,8 +196,8 @@ const Room: NextPage = () => {
           <h1>Next to play</h1>
 
           <div className={styles.roomPlaylist}>
-            {currentSongPlaylist.map((item) => (
-              <div className={styles.playlistItem}>
+            {currentSongPlaylist.map((item, index) => (
+              <div className={styles.playlistItem} key={index}>
                 <div className={styles.cover} style={{
                   background: `url(https://img.youtube.com/vi/${getYoutubeVideoId(item.song_url) || item.song_url}/maxresdefault.jpg)`
                 }}>
