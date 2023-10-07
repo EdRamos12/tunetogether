@@ -4,7 +4,7 @@ import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import SongDocument from '../utils/types/SongDocument';
 
 // autoConnect set to false, otherwise multiple sockets will run per client (spoiler: which is not optimal)
-let socket = io(':3000', {autoConnect: false});
+let socket = io('', {autoConnect: false});
 const SocketContext = React.createContext({} as {
   socket: Socket<DefaultEventsMap, DefaultEventsMap>, 
   room: string, 
