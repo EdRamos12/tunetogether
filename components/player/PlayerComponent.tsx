@@ -268,7 +268,13 @@ const PlayerComponent = () => {
       };
     } else {
       const loadVideo = () => {
-        if (!ytPlayer.loadVideoById) setTimeout(loadVideo, 100);
+        if (!ytPlayer.loadVideoById) {
+          if (!ytPlayerRef.current || !ytPlayerRef.current.loadVideoById) {
+            setTimeout(loadVideo, 100); 
+            return;
+          }
+          ytPlayerRef.current.loadVideoById(currentSongRef.current.url as string);
+        }
         ytPlayer.loadVideoById(currentSongRef.current.url as string)
       };
 
