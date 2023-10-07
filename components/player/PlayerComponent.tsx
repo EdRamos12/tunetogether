@@ -36,7 +36,6 @@ const PlayerComponent = () => {
 
   const [playerState, setPlayerState] = useState(-1);
   const playerStateRef = useRef<number>(playerState);
-  const progressBarValue = useRef<any>(null); //change 'any' later 
 
   const getCurrentSongList = async () => {
     try {
@@ -131,7 +130,7 @@ const PlayerComponent = () => {
 
   useEffect(() => {
     if (Object.keys(currentSong).length === 0) return;
-
+    console.log('yeah');
     if (!ytPlayer) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -268,8 +267,12 @@ const PlayerComponent = () => {
         delete (window as any).onYouTubeIframeAPIReady;
       };
     } else {
-      ytPlayer.loadVideoById(currentSongRef.current.url as string);
-      if (progressBarValue.current) clearInterval(progressBarValue.current);
+      const loadVideo = () => {
+        if (!ytPlayer.loadVideoById) setTimeout(loadVideo, 100);
+        ytPlayer.loadVideoById(currentSongRef.current.url as string)
+      };
+
+      loadVideo();
     }
   }, [currentSong]);
 
