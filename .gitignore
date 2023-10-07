@@ -40,3 +40,6 @@ next-env.d.ts
 
 # vscode config
 /.vscode
+
+# server build
+/dist
