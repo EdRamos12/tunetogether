@@ -37,7 +37,7 @@ const PlayerComponent = () => {
   const [playerState, setPlayerState] = useState(-1);
   const playerStateRef = useRef<number>(playerState);
 
-  const getCurrentSongList = async () => {
+  async function getCurrentSongList() {
     try {
       const response = await axiosInstance.get('/get-songs');
       setSongList(response.data.song_list);
@@ -78,7 +78,7 @@ const PlayerComponent = () => {
     return current_time;
   }
 
-  const resyncVideo = () => {
+  async function resyncVideo() {
     if (!ytPlayerRef.current) return false;
 
     const previous_time_stamp = (lastTimeSynced.last_time_video!) + ((Date.now() - (lastTimeSynced.last_time || 0)) / 1000);
@@ -88,16 +88,20 @@ const PlayerComponent = () => {
 
     //console.log('RESYNCED');
     //console.log(ytPlayerRef.current.getVideoUrl(), currentSongRef.current.url)
-    if (new_time >= ytPlayerRef.current.getDuration()) return false;
+    if (new_time >= ytPlayerRef.current.getDuration()) {
+      syncCurrentTime();
+      return false;
+    };
     
     if (ytPlayerRef.current.getVideoUrl().includes(currentSongRef.current.url as string)) ytPlayerRef.current.seekTo(new_time, true);
-    const last_synced = {
-      last_time: Date.now(),
-      video_synced_index: songListRef.current.findIndex(item => item.id === currentSongRef.current.id),
-      last_time_video: new_time,
-    }
-    lastTimeSyncedRef.current = last_synced;
-    setLastTimeSynced(last_synced);
+    // const last_synced = {
+    //   last_time: Date.now(),
+    //   video_synced_index: songListRef.current.findIndex(item => item.id === currentSongRef.current.id),
+    //   last_time_video: new_time,
+    // }
+    // lastTimeSyncedRef.current = last_synced;
+    // setLastTimeSynced(last_synced);
+    syncCurrentTime();
     return true;
   }
 
@@ -130,7 +134,7 @@ const PlayerComponent = () => {
 
   useEffect(() => {
     if (Object.keys(currentSong).length === 0) return;
-    console.log('yeah');
+    //console.log('yeah');
     if (!ytPlayer) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -148,13 +152,14 @@ const PlayerComponent = () => {
         if (new_time >= event.target.getDuration()) return false;
         
         if (event.target.getVideoUrl().includes(currentSongRef.current.url as string)) event.target.seekTo(new_time, true);
-        const last_synced = {
-          last_time: Date.now(),
-          video_synced_index: songListRef.current.findIndex(item => item.id === currentSongRef.current.id),
-          last_time_video: new_time,
-        }
-        lastTimeSyncedRef.current = last_synced;
-        setLastTimeSynced(last_synced);
+        // const last_synced = {
+        //   last_time: Date.now(),
+        //   video_synced_index: songListRef.current.findIndex(item => item.id === currentSongRef.current.id),
+        //   last_time_video: new_time,
+        // }
+        // lastTimeSyncedRef.current = last_synced;
+        // setLastTimeSynced(last_synced);
+        syncCurrentTime();
         return true;
       }
 
