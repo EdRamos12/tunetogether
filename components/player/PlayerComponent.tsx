@@ -170,7 +170,6 @@ const PlayerComponent = () => {
         switch (event.data) {
           case window.YT.PlayerState.UNSTARTED:
             event.target.playVideo();
-            break;
           case window.YT.PlayerState.PAUSED:
             // if (!videoPausedRef.current) {
             //   event.target.playVideo();
