@@ -74,8 +74,7 @@ export default class MusicQueueController {
 
     const musics = filterMusicPlaylist(result?.song_list);
 
-    if (musics.length == 0) return rsp.status(404).json({ message: 'There are no songs! Try requesting one in the current room!' });
-
+    if (musics.length == 0) return rsp.status(200).json({ current_server_time: Date.now() });
      
     return rsp.status(200).json({ current_server_time: Date.now(), current_song: musics.find((item: SongDocument) => item.time_to_play === getCurrentSongTime(musics)) });
   }
@@ -109,12 +108,14 @@ export default class MusicQueueController {
 
         // request music list
 
-        if (result?.song_list.length === 0) {
+        const updatedSongList = filterMusicPlaylist(result?.song_list);
+        console.log(updatedSongList);
+
+        if (updatedSongList.length === 0) {
           time_to_play = Date.now();
         } else {
-          time_to_play = result?.song_list[result?.song_list.length - 1].time_to_play + (result?.song_list[result?.song_list.length - 1].duration + threshold);
+          time_to_play = updatedSongList[updatedSongList.length - 1].time_to_play + (updatedSongList[updatedSongList.length - 1].duration + threshold);
         }
-        const updatedSongList = filterMusicPlaylist(result?.song_list);
 
         const musicToRequest: SongDocument = {
           id: v4(),
