@@ -94,7 +94,7 @@ export default class MusicQueueController {
 
       if (options.host?.includes('youtu.be') || options.host?.includes('youtube')) {
         const videoId = 
-          options.host?.includes('youtu.be') ? options.path?.replace('/', '') : 
+          options.host?.includes('youtu.be') ? options.pathname?.replace('/', '') : 
           options.pathname?.includes('shorts') ? options.pathname.replace('/shorts/', '') : 
           options.query.v;
 

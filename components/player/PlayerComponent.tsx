@@ -82,6 +82,17 @@ const PlayerComponent = () => {
       currentSongRef.current = current_song_state;
       setCurrentSong(current_song_state);
     } else {
+      if (!ytPlayerRef.current) return;
+
+      const currentLastTimeSynced = lastTimeSyncedRef.current;
+      const tolerance_in_seconds = 1.5;
+      const difference_when_last_synced_locally_using_date_now = Date.now() - (currentLastTimeSynced?.last_time || 0);
+      const difference_when_last_synced_locally_using_video_time = ytPlayerRef.current.getCurrentTime() - (currentLastTimeSynced?.last_time_video || 0);
+
+      if (difference_when_last_synced_locally_using_date_now / 1000 < tolerance_in_seconds) return; 
+  
+      if (difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time < tolerance_in_seconds && difference_when_last_synced_locally_using_date_now / 1000 - difference_when_last_synced_locally_using_video_time > -tolerance_in_seconds) return;  
+      
       resyncVideo();
     }
 
